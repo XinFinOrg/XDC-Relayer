@@ -1,5 +1,5 @@
-import { SubnetClient } from "./../service/subnet";
-import { MainnetClient } from "./../service/mainnet";
+import { SubnetService } from "../service/subnet";
+import { MainnetClient } from "../service/mainnet";
 import { CronJob } from "cron";
 import { config } from "../config";
 
@@ -8,23 +8,23 @@ export class Worker {
   private cron: CronJob;
   private abnormalDetectionCronJob: CronJob;
   private mainnetClient: MainnetClient;
-  private subnetClient: SubnetClient;
+  private subnetService: SubnetService;
 
   constructor(onAbnormalDetected: () => void) {
-    this.mainnetClient = new MainnetClient({} as any);
-    this.subnetClient = new SubnetClient({} as any);
-    this.cron = new CronJob(config.cronJobExpression, async () => {
-      console.log("⏰ Executing normal flow periodically");
-      // Pull subnet's latest confirmed block
-      const latestConfirmedSubnetBlock = await this.subnetClient.getLastConfirmedBlock();
-      const lastSubmittedSubnetBlock = await this.subnetClient.getLastSubmittedBlock();
-      const txs = await this.getDiffingTransactions(latestConfirmedSubnetBlock, lastSubmittedSubnetBlock);
+    this.mainnetClient = new MainnetClient(config.mainnet);
+    this.subnetService = new SubnetService(config.subnet);
+    this.cron = new CronJob(config.cronJob.jobExpression, async () => {
+      console.info("⏰ Executing normal flow periodically");
+      // Pull subnet's latest committed block
+      const lastCommittedBlockInfo = await this.subnetService.getLastCommittedBlockInfo();
+      const lastSubmittedSubnetBlock = await this.subnetService.getLastSubmittedBlock();
+      const txs = await this.getDiffingTransactions(lastCommittedBlockInfo, lastSubmittedSubnetBlock);
       await this.mainnetClient.submitTransactions(txs);
-      await this.subnetClient.cachingLastSubmittedBlock(latestConfirmedSubnetBlock);
+      await this.subnetService.cachingLastSubmittedBlock(lastCommittedBlockInfo);
     });
     
-    this.abnormalDetectionCronJob = new CronJob(config.abnormalDetectionCronJobExpression, () => {
-      console.log("🏥 Executing abnormal Detection periodically");
+    this.abnormalDetectionCronJob = new CronJob(config.cronJob.abnormalDetectionExpression, () => {
+      console.info("🏥 Executing abnormal Detection periodically");
       // Trigger the callback to initiatiate the bootstrap in event bus again
       onAbnormalDetected();
     });
@@ -38,13 +38,13 @@ export class Worker {
     // Pull latest confirmed tx from mainnet
     const lastAuditedBlock = await this.mainnetClient.getLastAuditedBlock();
     // Pull latest confirm block from subnet
-    const latestConfirmedSubnetBlock = await this.subnetClient.getLastConfirmedBlock();
+    const latestConfirmedSubnetBlock = await this.subnetService.getLastCommitteddBlock();
     // Diffing
     const txs = await this.getDiffingTransactions(lastAuditedBlock, latestConfirmedSubnetBlock);
     // Submit new txs
     await this.mainnetClient.submitTransactions(txs);
     // Store subnet block into cache
-    await this.subnetClient.cachingLastSubmittedBlock(latestConfirmedSubnetBlock);
+    await this.subnetService.cachingLastSubmittedBlock(latestConfirmedSubnetBlock);
   }
   
   async synchronization(): Promise<void> {
