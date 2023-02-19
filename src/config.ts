@@ -3,11 +3,14 @@ dotenv.config({ path: ".env" });
 
 export interface SubnetConfig {
   url: string;
+  fetchWaitingTime: number;
 }
 
 export interface MainnetConfig {
   url: string;
   smartContractAddress: string;
+  accountPK: string;
+  submitTransactionWaitingTime: number;
 }
 
 
@@ -20,6 +23,7 @@ export interface Config {
   };
   subnet: SubnetConfig;
   mainnet: MainnetConfig;
+  reBootstrapWaitingTime: number;
 }
 
 export const isDevMode = process.env.NODE_ENV == "development";
@@ -32,12 +36,16 @@ const config: Config = {
       abnormalDetectionExpression: "0 */10 * * * *", // every 10 minutes,
     },
     subnet: {
-      url: process.env.SUBNET_URL
+      url: process.env.SUBNET_URL,
+      fetchWaitingTime: +(process.env.SN_FETCHING_WAITING_TIME) || 1000
     },
     mainnet: {
       url: process.env.MAINNET_URL,
-      smartContractAddress: process.env.SC_ADDRESS
-    }
+      smartContractAddress: process.env.SC_ADDRESS,
+      accountPK: process.env.MAINNET_WALLET_PK,
+      submitTransactionWaitingTime: +(process.env.MN_TX_SUBMIT_WAITING_TIME) || 2000
+    },
+    reBootstrapWaitingTime: +(process.env.BOOTSTRAP_FAILURE_WAIT_TIME) || 3000000
 };
 
 export { config };
