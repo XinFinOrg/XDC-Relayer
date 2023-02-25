@@ -20,6 +20,6 @@ app.use(logger(winston));
 app.use(bodyParser());
 
 app.listen(config.port, () => {
-    console.log(`Server running on port ${config.port}`);
+    console.info(`Server running on port ${config.port}`);
     eventBus.init();
 });

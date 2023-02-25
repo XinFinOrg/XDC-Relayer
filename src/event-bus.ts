@@ -1,5 +1,7 @@
 import EventEmitter from "events";
+import { sleep } from "./utils/index";
 import { Worker } from "./conntroller/worker";
+import { config } from "./config";
 
 enum EventBusNames {
   BOOTSTRAP = "bootstrap",
@@ -15,13 +17,22 @@ export class EventBus {
     this.worker = new Worker(this.reBootStrap);
     
     this.emitter.on(EventBusNames.BOOTSTRAP, async () => {
-      console.log("🥾 Received BOOTSTRAP events");
-      await this.worker.bootstrap();
-      this.triggerEvent(EventBusNames.SYNC);
+      console.info("🥾 Received BOOTSTRAP events");
+      const success = await this.worker.bootstrap();
+      if (success) {
+        // Only trigger the normal operation if bootstrap has completed successfully
+        this.triggerEvent(EventBusNames.SYNC);
+      } else {
+        // Whenever the service failed to bootstrap, we will keep the service down for 5 minutes before retrying
+        console.error("Error while bootstraping, system will go into sleep mode for 5 minutes before re-processing!");
+        await sleep(config.reBootstrapWaitingTime);
+        this.triggerEvent(EventBusNames.BOOTSTRAP);    
+      }
+      
     });
     
     this.emitter.on(EventBusNames.SYNC, async () => {
-      console.log("👍 Received SYNC events");
+      console.info("👍 Received SYNC events");
       await this.worker.synchronization();
     });
   }
@@ -37,7 +48,7 @@ export class EventBus {
   }
   
   reBootStrap(): void {
-    console.log("Received a signal to trigger the bootstrap again!");
+    console.info("Received a signal to trigger the bootstrap again!");
     this.emitter.emit(EventBusNames.BOOTSTRAP);
   }
 }
