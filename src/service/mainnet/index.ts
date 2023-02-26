@@ -64,10 +64,11 @@ export class MainnetClient {
       for await (const h of rlpEncodedHeaders) {
         const rlpBytes = base64ToUint8(h);
         const transactionToBeSent = await this.subnetSmartContractInstance.methods.receiveHeader(rlpBytes);
+        const gas = await transactionToBeSent.estimateGas({from: this.mainnetAccount.address});
         const options = {
           to: transactionToBeSent._parent._address,
           data    : transactionToBeSent.encodeABI(),
-          gas     : await transactionToBeSent.estimateGas({from: this.mainnetAccount.address}),
+          gas,
           gasPrice: TRANSACTION_GAS_NUMBER
         };
         const signed = await this.web3.eth.accounts.signTransaction(options, this.mainnetAccount.privateKey);

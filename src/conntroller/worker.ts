@@ -29,7 +29,7 @@ export class Worker {
       console.info("⏰ Executing normal flow periodically");
       // Pull subnet's latest committed block
       const lastSubmittedSubnetBlock = await this.cache.getLastSubmittedSubnetHeader();
-      const lastCommittedBlockInfo = await this.subnetService.getLastCommittedBlockInfoByNum();
+      const lastCommittedBlockInfo = await this.subnetService.getLastCommittedBlockInfo();
       
       await this.diffAndSubmitTxs(lastSubmittedSubnetBlock.subnetBlockHash, lastCommittedBlockInfo);
       this.cache.setLastSubmittedSubnetHeader(lastCommittedBlockInfo);
@@ -42,7 +42,7 @@ export class Worker {
       // Pull latest confirmed tx from mainnet
       const lastAuditedBlockHash = await this.mainnetClient.getLastAuditedBlockHash();
       // Pull latest confirm block from subnet
-      const lastestSubnetCommittedBlock = await this.subnetService.getLastCommittedBlockInfoByNum();
+      const lastestSubnetCommittedBlock = await this.subnetService.getLastCommittedBlockInfo();
       const { subnetBlockHash: mainnetBlockHash, subnetBlockNumber: mainnetBlockNumber } = await this.subnetService.getLastV2BlockInfoByHash(lastAuditedBlockHash);
       if (!mainnetBlockNumber || (mainnetBlockNumber != lastestSubnetCommittedBlock.subnetBlockNumber)) {
         console.error("ERROR! Chain not in sync!", lastAuditedBlockHash, lastestSubnetCommittedBlock, mainnetBlockNumber, mainnetBlockHash);
@@ -63,7 +63,7 @@ export class Worker {
       // Pull latest confirmed tx from mainnet
       const lastAuditedBlockHash = await this.mainnetClient.getLastAuditedBlockHash();
       // Pull latest confirm block from subnet
-      const lastestSubnetCommittedBlock = await this.subnetService.getLastCommittedBlockInfoByNum();
+      const lastestSubnetCommittedBlock = await this.subnetService.getLastCommittedBlockInfo();
       // Diffing and push the blocks into mainnet as transactions
       await this.diffAndSubmitTxs(lastAuditedBlockHash, lastestSubnetCommittedBlock);
   
@@ -105,6 +105,8 @@ export class Worker {
           }
           break;
       }
+    } else {
+      console.info("🥇 Mainnet and subnet are already in sync");
     }
   }
 }

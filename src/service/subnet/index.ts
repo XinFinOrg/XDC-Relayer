@@ -21,44 +21,50 @@ export class SubnetService {
     this.web3 = (new Web3(config.url)).extend(subnetExtensions);
   }
   
-  async getLastCommittedBlockInfoByNum(blockNum?: number) : Promise<SubnetBlockInfo> {
+  async getLastCommittedBlockInfo() : Promise<SubnetBlockInfo> {
     try {
-      const blockNumHex = blockNum ? `0x${(blockNum).toString(16)}` : undefined ;  // TODO: to be replaced by "confirmed" for the `undefined`
-      const { Hash, Number, Round, EncodeRLP, ParentHash }  = await this.web3.xdcSubnet.getV2Block(); // TODO: Replace by get by number
+      const { Hash, Number, Round, EncodedRLP, ParentHash }  = await this.web3.xdcSubnet.getV2Block("committed");
       return {
         subnetBlockHash: Hash,
         subnetBlockNumber: Number,
         subnetBlockRound: Round,
-        encodedRLP: EncodeRLP,
+        encodedRLP: EncodedRLP,
         parentHash: ParentHash
       };
     } catch (error) {
-      console.error("Error while trying to fetch blockInfo by number from subnet", {message: error.message, blockNum });
+      console.error("Error while trying to fetch blockInfo by number from subnet", {message: error.message });
+      throw error;
+    }
+  }
+  
+  async getLastCommittedBlockInfoByNum(blockNum: number) : Promise<SubnetBlockInfo> {
+    try {
+      const { Hash, Number, Round, EncodedRLP, ParentHash }  = await this.web3.xdcSubnet.getV2Block(`0x${(blockNum).toString(16)}`);
+      return {
+        subnetBlockHash: Hash,
+        subnetBlockNumber: Number,
+        subnetBlockRound: Round,
+        encodedRLP: EncodedRLP,
+        parentHash: ParentHash
+      };
+    } catch (error) {
+      console.error("Error while trying to fetch blockInfo by number from subnet", {message: error.message });
       throw error;
     }
   }
   
   async getLastV2BlockInfoByHash(blockHash: string) : Promise<SubnetBlockInfo> {
     try {
-      const { Hash, Number, Round, EncodeRLP, ParentHash }  = await this.web3.xdcSubnet.getV2BlockByHash(blockHash);
+      const { Hash, Number, Round, EncodedRLP, ParentHash }  = await this.web3.xdcSubnet.getV2BlockByHash(blockHash);
       return {
         subnetBlockHash: Hash,
         subnetBlockNumber: Number,
         subnetBlockRound: Round,
-        encodedRLP: EncodeRLP,
+        encodedRLP: EncodedRLP,
         parentHash: ParentHash
       };
     } catch (error) {
       console.error("Error while trying to fetch blockInfo by hash from subnet", {message: error.message, blockHash});
-      throw error;
-    }
-  }
-  
-  async getLastCommitteddBlock() : Promise<BlockTransactionString> {
-    try {
-      return await this.web3.eth.getBlock("latest");
-    } catch (error) {
-      console.error("Error while trying to fetch the last confirmed block from subnet", error);
       throw error;
     }
   }
