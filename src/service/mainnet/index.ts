@@ -22,6 +22,7 @@ export class MainnetClient {
     this.web3 = (new Web3(config.url));
     this.subnetSmartContractInstance = new this.web3.eth.Contract(subnetContract.abi as AbiItem[], config.smartContractAddress);
     this.mainnetAccount = this.web3.eth.accounts.privateKeyToAccount(config.accountPK);
+    this.mainnetConfig = config;
   }
   
   /*
@@ -29,14 +30,15 @@ export class MainnetClient {
   **/
   async getLastAudittedBlock(): Promise<SmartContractData> {
     try {
-      const [blockHash, blockHeight] = await this.subnetSmartContractInstance.methods.getLatestBlock().call();
-      console.log(blockHash, blockHeight)
-      if (!blockHash || !blockHeight) {
-        console.error("Invalid block hash or height received", blockHash, blockHeight);
-        throw new Error("Unable to get last auditted block information");
+      const result = await this.subnetSmartContractInstance.methods.getLatestBlocks().call();
+      const [latestBlockHash, latestBlockHeight] = result[0];
+      const [latestSmComittedHash, latestSmHeight] = result[1];
+      if (!latestBlockHash || !latestBlockHeight || !latestSmComittedHash || !latestSmHeight) {
+        console.error("Invalid block hash or height received", latestBlockHash, latestBlockHeight, latestSmComittedHash, latestSmHeight);
+        throw new Error("Unable to get last auditted block informations");
       }
       return {
-        smartContractHash: blockHash, smartContractHeight: parseInt(blockHeight)
+        smartContractHash: latestBlockHash, smartContractHeight: parseInt(latestBlockHeight)
       };
     } catch (error) {
       console.error("Error while trying to fetch the last audited subnet's block in XDC mainnet", {message: error.message});
@@ -47,8 +49,9 @@ export class MainnetClient {
   async submitTxs(rlpEncodedHeaders: string[]): Promise<void> {
     try {
       for await (const h of rlpEncodedHeaders) {
-        const rlpBytes = base64ToUint8(h);
-        const transactionToBeSent = await this.subnetSmartContractInstance.methods.receiveHeader(rlpBytes);
+        // const rlpBytes = base64ToUint8(h);
+        const rlpEncodedHex = "0x" + Buffer.from(h, "base64").toString("hex");
+        const transactionToBeSent = await this.subnetSmartContractInstance.methods.receiveHeader(rlpEncodedHex);
         const gas = await transactionToBeSent.estimateGas({from: this.mainnetAccount.address});
         const options = {
           to: transactionToBeSent._parent._address,
