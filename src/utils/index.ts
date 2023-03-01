@@ -1,5 +1,3 @@
-import atob from "atob";
-
 export const sleep = (ms: number) => {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -15,5 +13,3 @@ export const chunkBy = (chunkValue: number) => (numToChunk: number): number[] =>
 
   return chunks;
 };
-
-export const base64ToUint8 = (str: string): Uint8Array => Uint8Array.from(atob(str), (c) => c.charCodeAt(0));

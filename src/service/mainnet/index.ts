@@ -3,7 +3,7 @@ import { Contract } from "web3-eth-contract";
 import {AbiItem} from "web3-utils";
 import { Account } from "web3-core";
 import { MainnetConfig } from "../../config";
-import { base64ToUint8, sleep } from "../../utils/index";
+import { sleep } from "../../utils/index";
 import subnetContract from "../../../contract/subnet.json";
 
 export interface SmartContractData {
@@ -15,12 +15,12 @@ const TRANSACTION_GAS_NUMBER = 250000000;
 
 export class MainnetClient {
   private web3: Web3;
-  private subnetSmartContractInstance: Contract;
+  private smartContractInstance: Contract;
   private mainnetAccount: Account;
   private mainnetConfig: MainnetConfig;
   constructor(config: MainnetConfig) {
     this.web3 = (new Web3(config.url));
-    this.subnetSmartContractInstance = new this.web3.eth.Contract(subnetContract.abi as AbiItem[], config.smartContractAddress);
+    this.smartContractInstance = new this.web3.eth.Contract(subnetContract.abi as AbiItem[], config.smartContractAddress);
     this.mainnetAccount = this.web3.eth.accounts.privateKeyToAccount(config.accountPK);
     this.mainnetConfig = config;
   }
@@ -30,7 +30,7 @@ export class MainnetClient {
   **/
   async getLastAudittedBlock(): Promise<SmartContractData> {
     try {
-      const result = await this.subnetSmartContractInstance.methods.getLatestBlocks().call();
+      const result = await this.smartContractInstance.methods.getLatestBlocks().call();
       const [latestBlockHash, latestBlockHeight] = result[0];
       const [latestSmComittedHash, latestSmHeight] = result[1];
       if (!latestBlockHash || !latestBlockHeight || !latestSmComittedHash || !latestSmHeight) {
@@ -49,9 +49,8 @@ export class MainnetClient {
   async submitTxs(rlpEncodedHeaders: string[]): Promise<void> {
     try {
       for await (const h of rlpEncodedHeaders) {
-        // const rlpBytes = base64ToUint8(h);
         const rlpEncodedHex = "0x" + Buffer.from(h, "base64").toString("hex");
-        const transactionToBeSent = await this.subnetSmartContractInstance.methods.receiveHeader(rlpEncodedHex);
+        const transactionToBeSent = await this.smartContractInstance.methods.receiveHeader(rlpEncodedHex);
         const gas = await transactionToBeSent.estimateGas({from: this.mainnetAccount.address});
         const options = {
           to: transactionToBeSent._parent._address,
