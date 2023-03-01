@@ -14,7 +14,7 @@ export class EventBus {
   
   constructor() {
     this.emitter = new EventEmitter();
-    this.worker = new Worker(this.reBootStrap);
+    this.worker = new Worker(config, this.reBootStrap);
     
     this.emitter.on(EventBusNames.BOOTSTRAP, async () => {
       console.info("🥾 Received BOOTSTRAP events");

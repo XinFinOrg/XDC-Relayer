@@ -14,14 +14,14 @@ export interface FetchedV2BlockInfo {
   ParentHash: string;
   Number: number;
   Round: number;
-  EncodeRLP: string;
+  EncodedRLP: string;
   Error: string;
 }
 
 export interface Web3WithExtension extends Web3 {
   xdcSubnet: {
     getLatestCommittedBlockInfo:  () => Promise<CommittedBlockInfo>
-    getV2Block: () => Promise<FetchedV2BlockInfo>
+    getV2Block: (number: string) => Promise<FetchedV2BlockInfo>
     getV2BlockByNumber: (bluckNum: string) => Promise<FetchedV2BlockInfo>
     getV2BlockByHash: (blockHash: string) => Promise<FetchedV2BlockInfo>
   }
@@ -36,6 +36,7 @@ export const subnetExtensions = {
     },
     {
       name: "getV2Block",
+      params: 1,
       call: "XDPoS_getV2BlockByNumber"
     },
     {
