@@ -46,10 +46,10 @@ export class MainnetClient {
     }
   }
     
-  async submitTxs(rlpEncodedHeaders: string[]): Promise<void> {
+  async submitTxs(results: Array<{encodedRLP: string, blockNum: number}>): Promise<void> {
     try {
-      for await (const h of rlpEncodedHeaders) {
-        const rlpEncodedHex = "0x" + Buffer.from(h, "base64").toString("hex");
+      for await (const {encodedRLP, blockNum} of results) {
+        const rlpEncodedHex = "0x" + Buffer.from(encodedRLP, "base64").toString("hex");
         const transactionToBeSent = await this.smartContractInstance.methods.receiveHeader(rlpEncodedHex);
         const gas = await transactionToBeSent.estimateGas({from: this.mainnetAccount.address});
         const options = {
@@ -60,7 +60,7 @@ export class MainnetClient {
         };
         const signed = await this.web3.eth.accounts.signTransaction(options, this.mainnetAccount.privateKey);
         const receipt = await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
-        console.info("Successfully submitted the subnet block as tx into mainnet", receipt);
+        console.info(`Successfully submitted the subnet block ${blockNum} as tx into mainnet`, receipt);
         await sleep(this.mainnetConfig.submitTransactionWaitingTime);
       } 
     } catch (error) {

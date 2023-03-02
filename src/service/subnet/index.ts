@@ -76,11 +76,11 @@ export class SubnetService {
     }
   }
   
-  async bulkGetRlpEncodedHeaders(startingBlockNumber: number, numberOfBlocksToFetch: number): Promise<string[]>{
-    const rlpEncodedHeaders: string[] = [];
+  async bulkGetRlpEncodedHeaders(startingBlockNumber: number, numberOfBlocksToFetch: number): Promise<Array<{encodedRLP: string, blockNum: number}>>{
+    const rlpEncodedHeaders: Array<{encodedRLP: string, blockNum: number}> = [];
     for (let i = startingBlockNumber; i < startingBlockNumber + numberOfBlocksToFetch; i++) {
       const { encodedRLP } = await this.getCommittedBlockInfoByNum(i);
-      rlpEncodedHeaders.push(encodedRLP);
+      rlpEncodedHeaders.push({encodedRLP, blockNum: i});
       await sleep(this.subnetConfig.fetchWaitingTime);
     }
     return rlpEncodedHeaders;
