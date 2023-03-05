@@ -1,6 +1,5 @@
 
 import { CronJob } from "cron";
-import { ChainNotInSync } from "./../errors/chainNotInSync";
 import { SubnetBlockInfo, SubnetService } from "../service/subnet";
 import { MainnetClient} from "../service/mainnet";
 import { Config } from "../config";
@@ -46,6 +45,7 @@ export class Worker {
   async bootstrap(): Promise<boolean> {
     let success = false;
     try {
+      this.cache.cleanCache();
       this.isBootstraping = true;
       // Clean timers
       this.cron.stop();
