@@ -15,8 +15,7 @@ export interface MainnetConfig {
 
 export interface NotificationConfig {
   slack?: {
-    channel: string;
-    token: string;
+    incomingWebHook: string;
   }
 }
 
@@ -55,9 +54,8 @@ const config: Config = {
     },
     reBootstrapWaitingTime: +(process.env.BOOTSTRAP_FAILURE_WAIT_TIME) || 3000000,
     notification: {
-      slack: (process.env.SLACK_CHANNEL && process.env.SLACK_BOT_TOKEN) ? {
-        channel: process.env.SLACK_CHANNEL,
-        token: process.env.SLACK_BOT_TOKEN
+      slack: process.env.SLACK_WEBHOOK ? {
+        incomingWebHook: process.env.SLACK_WEBHOOK
       } : undefined
     }
 };

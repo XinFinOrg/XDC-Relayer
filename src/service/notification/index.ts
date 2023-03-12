@@ -4,14 +4,13 @@ import { Cache } from "../cache";
 
 const NOTIFICATION_DELAY_PERIOD = 1500; // Only send message every 15 minutes
 export class Nofications {
-  private notificationChannels: any[];
+  private notificationChannels: any[] = [];
   private cache: Cache;
   
   constructor(notificationConfig: NotificationConfig, cache: Cache) {
     this.cache = cache;
     if (notificationConfig.slack) {
-      const { channel, token} = notificationConfig.slack;
-      this.notificationChannels.push(new SlackNotification(channel, token)); 
+      this.notificationChannels.push(new SlackNotification(notificationConfig.slack.incomingWebHook)); 
     }
     // Add the rest here
   }
