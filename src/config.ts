@@ -13,6 +13,12 @@ export interface MainnetConfig {
   submitTransactionWaitingTime: number;
 }
 
+export interface NotificationConfig {
+  slack?: {
+    incomingWebHook: string;
+  }
+}
+
 
 export interface Config {
   port: number;
@@ -24,6 +30,7 @@ export interface Config {
   subnet: SubnetConfig;
   mainnet: MainnetConfig;
   reBootstrapWaitingTime: number;
+  notification: NotificationConfig;
 }
 
 export const isDevMode = process.env.NODE_ENV == "development";
@@ -45,7 +52,12 @@ const config: Config = {
       accountPK: process.env.MAINNET_WALLET_PK || "",
       submitTransactionWaitingTime: +(process.env.MN_TX_SUBMIT_WAITING_TIME) || 2000
     },
-    reBootstrapWaitingTime: +(process.env.BOOTSTRAP_FAILURE_WAIT_TIME) || 3000000
+    reBootstrapWaitingTime: +(process.env.BOOTSTRAP_FAILURE_WAIT_TIME) || 3000000,
+    notification: {
+      slack: process.env.SLACK_WEBHOOK ? {
+        incomingWebHook: process.env.SLACK_WEBHOOK
+      } : undefined
+    }
 };
 
 export { config };

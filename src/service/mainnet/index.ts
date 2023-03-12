@@ -9,6 +9,8 @@ import subnetContract from "../../../contract/subnet.json";
 export interface SmartContractData {
   smartContractHash: string;
   smartContractHeight: number;
+  smartContractCommittedHeight: number;
+  smartContractCommittedHash: string;
 }
 
 const TRANSACTION_GAS_NUMBER = 250000000;
@@ -38,7 +40,8 @@ export class MainnetClient {
         throw new Error("Unable to get last auditted block informations");
       }
       return {
-        smartContractHash: latestBlockHash, smartContractHeight: parseInt(latestBlockHeight)
+        smartContractHash: latestBlockHash, smartContractHeight: parseInt(latestBlockHeight),
+        smartContractCommittedHash: latestSmComittedHash, smartContractCommittedHeight: latestSmHeight
       };
     } catch (error) {
       console.error("Error while trying to fetch the last audited subnet's block in XDC mainnet", {message: error.message});
