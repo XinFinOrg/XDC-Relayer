@@ -18,6 +18,7 @@
     },
     {
       "type": "node",
+      "runtimeVersion": "18.12.1",
       "name": "vscode-jest-tests.v2",
       "request": "launch",
       "args": [

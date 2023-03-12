@@ -31,4 +31,8 @@ export class Cache {
       throw new CachingError("GET");
     }
   }
+  
+  cleanCache(): void {
+    this.inMemoryCache.flushAll();
+  }
 }
