@@ -6,6 +6,7 @@ import { Config } from "../config";
 import { chunkBy } from "../utils";
 import { Cache } from "../service/cache";
 import { ForkingError } from "./../errors/forkingError";
+import { Nofications } from "../service/notification";
 
 
 const MAX_FETCH_BLOCK_SIZE = 10;
@@ -17,21 +18,31 @@ export class Worker {
   subnetService: SubnetService;
   isBootstraping: boolean;
   cache: Cache;
+  notification: Nofications;
 
   constructor(config: Config, onAbnormalDetected: () => void) {
     this.cache = new Cache();
     this.isBootstraping = false;
     this.mainnetClient = new MainnetClient(config.mainnet);
     this.subnetService = new SubnetService(config.subnet);
+    this.notification = new Nofications(config.notification, this.cache);
     this.cron = new CronJob(config.cronJob.jobExpression, async () => {
-      if (this.isBootstraping) return;
-      console.info("⏰ Executing normal flow periodically");
-      // Pull subnet's latest committed block
-      const lastSubmittedSubnetBlock = await this.cache.getLastSubmittedSubnetHeader();
-      const lastCommittedBlockInfo = await this.subnetService.getLastCommittedBlockInfo();
-      
-      await this.diffAndSubmitTxs(lastSubmittedSubnetBlock.subnetBlockHash, lastSubmittedSubnetBlock.subnetBlockNumber, lastCommittedBlockInfo);
-      this.cache.setLastSubmittedSubnetHeader(lastCommittedBlockInfo);
+      try {
+        if (this.isBootstraping) return;
+        console.info("⏰ Executing normal flow periodically");
+        // Pull subnet's latest committed block
+        const lastSubmittedSubnetBlock = await this.cache.getLastSubmittedSubnetHeader();
+        const lastCommittedBlockInfo = await this.subnetService.getLastCommittedBlockInfo();
+        
+        await this.diffAndSubmitTxs(lastSubmittedSubnetBlock.subnetBlockHash, lastSubmittedSubnetBlock.subnetBlockNumber, lastCommittedBlockInfo);
+        this.cache.setLastSubmittedSubnetHeader(lastCommittedBlockInfo);  
+      } catch (error) {
+        console.error("Fail to run cron job normally", {message: error.message});
+        if (error instanceof ForkingError) {
+          this.notification.postForkingErrorMessage(error.message);
+        }
+        onAbnormalDetected();
+      }
     });
     
     this.abnormalDetectionCronJob = new CronJob(config.cronJob.abnormalDetectionExpression, async () => {
@@ -62,6 +73,9 @@ export class Worker {
       success = true;
     } catch (error) {
       console.error("Fail to bootstrap", {message: error.message});
+      if (error instanceof ForkingError) {
+        this.notification.postForkingErrorMessage(error.message);
+      }
     }
     this.isBootstraping = false;
     return success;
