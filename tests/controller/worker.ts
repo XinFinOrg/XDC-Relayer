@@ -14,8 +14,10 @@ test("Should bootstrap successfully for same block hash", async () => {
   
   const mockMainnetClient = {
     getLastAudittedBlock: jest.fn().mockResolvedValue({
-      smartContractHash: "0x123",
-      smartContractHeight: 3
+      smartContractHash: "0x666",
+      smartContractHeight: 6,
+      smartContractCommittedHash: "0x123",
+      smartContractCommittedHeight: 3
     })
   };
   const mockSubnetClient = {
@@ -45,8 +47,10 @@ test("Should submit transactions normally for small gaps", async () => {
   });
   const mockMainnetClient = {
     getLastAudittedBlock: jest.fn().mockResolvedValue({
-      smartContractHash: "0x123",
-      smartContractHeight: 3
+      smartContractHash: "0x666",
+      smartContractHeight: 6,
+      smartContractCommittedHash: "0x123",
+      smartContractCommittedHeight: 3
     }),
     submitTxs: jest.fn().mockResolvedValueOnce(undefined)
   };
@@ -58,9 +62,12 @@ test("Should submit transactions normally for small gaps", async () => {
       encodedRLP: "0x123123123",
       parentHash: "0x000"
     }),
-    getCommittedBlockInfoByNum: jest.fn().mockResolvedValue({
+    getCommittedBlockInfoByNum: jest.fn().mockResolvedValueOnce({
       subnetBlockHash: "0x123",
       subnetBlockNumber: 3
+    }).mockResolvedValueOnce({
+      subnetBlockHash: "0x666",
+      subnetBlockNumber: 6
     }),
     bulkGetRlpEncodedHeaders: jest.fn().mockResolvedValueOnce(mockedResultsToSubmit)
   };
@@ -70,7 +77,7 @@ test("Should submit transactions normally for small gaps", async () => {
   expect(success).toBe(true);
   expect(mockMainnetClient.submitTxs).toHaveBeenCalledTimes(1);
   expect(mockMainnetClient.submitTxs).toHaveBeenCalledWith(mockedResultsToSubmit);
-  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toBeCalledWith(4, 7);
+  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toBeCalledWith(7, 4);
 });
 
 test("Should submit transactions normally for large gaps", async () => {
@@ -85,23 +92,28 @@ test("Should submit transactions normally for large gaps", async () => {
   
   const mockMainnetClient = {
     getLastAudittedBlock: jest.fn().mockResolvedValue({
-      smartContractHash: "0x123",
-      smartContractHeight: 3
+      smartContractHash: "0x666",
+      smartContractHeight: 6,
+      smartContractCommittedHash: "0x123",
+      smartContractCommittedHeight: 3
     }),
     submitTxs: jest.fn().mockResolvedValue(undefined)
   };
   
   const mockSubnetClient = {
     getLastCommittedBlockInfo: jest.fn().mockResolvedValue({
-      subnetBlockHash: "0x456",
+      subnetBlockHash: "0x100",
       subnetBlockNumber: 100,
       subnetBlockRound: 99,
       encodedRLP: "0x123123123",
       parentHash: "0x000"
     }),
-    getCommittedBlockInfoByNum: jest.fn().mockResolvedValue({
+    getCommittedBlockInfoByNum: jest.fn().mockResolvedValueOnce({
       subnetBlockHash: "0x123",
       subnetBlockNumber: 3
+    }).mockResolvedValueOnce({
+      subnetBlockHash: "0x666",
+      subnetBlockNumber: 6
     }),
     bulkGetRlpEncodedHeaders: jest.fn().mockResolvedValueOnce(mockedResultsToSubmit)
   };
@@ -112,10 +124,10 @@ test("Should submit transactions normally for large gaps", async () => {
   const success = await worker.bootstrap();
   expect(success).toBe(true);
   expect(mockMainnetClient.submitTxs).toHaveBeenCalledTimes(10);
-  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(1, 4, 10);
-  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(2, 14, 10);
-  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(3, 24, 10);
-  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenLastCalledWith(94, 7);
+  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(1, 7, 10);
+  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(2, 17, 10);
+  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(3, 27, 10);
+  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenLastCalledWith(97, 4);
 });
 
 test("Should fail if same block height but different hash received", async () => {
@@ -123,8 +135,10 @@ test("Should fail if same block height but different hash received", async () =>
   const worker = new Worker(workerConfig, abnormalCallback);
   const mockMainnetClient = {
     getLastAudittedBlock: jest.fn().mockResolvedValue({
-      smartContractHash: "0x123",
-      smartContractHeight: 3
+      smartContractHash: "0x666",
+      smartContractHeight: 6,
+      smartContractCommittedHash: "0x123",
+      smartContractCommittedHeight: 3
     }),
   };
   const mockSubnetClient = {
@@ -148,8 +162,10 @@ test("Should fail if fetch same block height from subnet have different hash tha
   const worker = new Worker(workerConfig, abnormalCallback);
   const mockMainnetClient = {
     getLastAudittedBlock: jest.fn().mockResolvedValue({
-      smartContractHash: "0x123",
-      smartContractHeight: 3
+      smartContractHash: "0x666",
+      smartContractHeight: 6,
+      smartContractCommittedHash: "0x123",
+      smartContractCommittedHeight: 3
     }),
   };
   const mockSubnetClient = {
@@ -176,8 +192,10 @@ test("Should pass successfully if mainnet SM is ahead of subnet and matches the 
   const worker = new Worker(workerConfig, abnormalCallback);
   const mockMainnetClient = {
     getLastAudittedBlock: jest.fn().mockResolvedValue({
-      smartContractHash: "0x555",
-      smartContractHeight: 5
+      smartContractHash: "0x999",
+      smartContractHeight: 9,
+      smartContractCommittedHash: "0x555",
+      smartContractCommittedHeight: 5
     }),
     getBlockHashByNumber: jest.fn().mockResolvedValueOnce("0x333")
   };
@@ -212,8 +230,10 @@ test("Should start normal cron job", async () => {
   }];
   const mockMainnetClient = {
     getLastAudittedBlock: jest.fn().mockResolvedValue({
-      smartContractHash: "0x123",
-      smartContractHeight: 3
+      smartContractHash: "0x666",
+      smartContractHeight: 6,
+      smartContractCommittedHash: "0x123",
+      smartContractCommittedHeight: 3
     }),
     submitTxs: jest.fn().mockResolvedValueOnce(undefined)
   };
@@ -235,6 +255,9 @@ test("Should start normal cron job", async () => {
       subnetBlockHash: "0x123",
       subnetBlockNumber: 3
     }).mockResolvedValueOnce({
+      subnetBlockHash: "0x666",
+      subnetBlockNumber: 6
+    }).mockResolvedValueOnce({
       subnetBlockHash: "0x10",
       subnetBlockNumber: 10
     }),
@@ -252,7 +275,7 @@ test("Should start normal cron job", async () => {
   expect(success).toBe(true);
   expect(mockMainnetClient.submitTxs).toHaveBeenCalledTimes(1);
   expect(mockMainnetClient.submitTxs).toHaveBeenCalledWith(mockedResultsToSubmit);
-  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toBeCalledWith(4, 7);
+  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toBeCalledWith(7, 4);
   
   await worker.synchronization();
   await sleep(2500);
@@ -260,4 +283,6 @@ test("Should start normal cron job", async () => {
   expect(cachedValue?.subnetBlockHash).toEqual("0x456");
   expect(cachedValue?.subnetBlockNumber).toEqual(11);
   expect(cachedValue?.subnetBlockRound).toEqual(12);
+  worker.cron.stop();
+  worker.abnormalDetectionCronJob.stop();
 });

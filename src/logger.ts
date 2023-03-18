@@ -5,7 +5,7 @@ import * as path from "path";
 
 const logger = (winstonInstance: any): any  => {
     winstonInstance.configure({
-        level: config.debugLogging ? "debug" : "info",
+        level: config.devMode ? "debug" : "info",
         transports: [
             //
             // - Write all logs error (and below) to `error.log`.

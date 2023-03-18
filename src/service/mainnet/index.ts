@@ -41,7 +41,7 @@ export class MainnetClient {
       }
       return {
         smartContractHash: latestBlockHash, smartContractHeight: parseInt(latestBlockHeight),
-        smartContractCommittedHash: latestSmComittedHash, smartContractCommittedHeight: latestSmHeight
+        smartContractCommittedHash: latestSmComittedHash, smartContractCommittedHeight: parseInt(latestSmHeight)
       };
     } catch (error) {
       console.error("Error while trying to fetch the last audited subnet's block in XDC mainnet", {message: error.message});
@@ -62,8 +62,8 @@ export class MainnetClient {
           gasPrice: TRANSACTION_GAS_NUMBER
         };
         const signed = await this.web3.eth.accounts.signTransaction(options, this.mainnetAccount.privateKey);
-        const receipt = await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
-        console.info(`Successfully submitted the subnet block ${blockNum} as tx into mainnet`, receipt);
+        await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+        console.info(`Successfully submitted the subnet block ${blockNum} as tx into mainnet`);
         await sleep(this.mainnetConfig.submitTransactionWaitingTime);
       } 
     } catch (error) {
@@ -72,6 +72,7 @@ export class MainnetClient {
     }
   }
   
+  // Below shall be given height provide the SM hash
   async getBlockHashByNumber(height: number): Promise<string> {
     try {
       const { hash } = await this.web3.eth.getBlock(height);
