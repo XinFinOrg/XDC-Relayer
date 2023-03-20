@@ -22,7 +22,7 @@ export interface NotificationConfig {
 
 export interface Config {
   port: number;
-  debugLogging: boolean;
+  devMode: boolean;
   cronJob: {
     jobExpression: string;
     abnormalDetectionExpression: string;
@@ -33,11 +33,11 @@ export interface Config {
   notification: NotificationConfig;
 }
 
-export const isDevMode = process.env.NODE_ENV == "development";
+export const devMode = process.env.NODE_ENV != "production";
 
 const config: Config = {
     port: +(process.env.PORT || 3000),
-    debugLogging: isDevMode,
+    devMode: devMode,
     cronJob: {
       jobExpression: "*/10 * * * * *", // every 10s
       abnormalDetectionExpression: "0 */10 * * * *", // every 10 minutes,
@@ -50,7 +50,7 @@ const config: Config = {
       url: process.env.MAINNET_URL || "",
       smartContractAddress: process.env.SC_ADDRESS || "",
       accountPK: process.env.MAINNET_WALLET_PK || "",
-      submitTransactionWaitingTime: +(process.env.MN_TX_SUBMIT_WAITING_TIME) || 2000
+      submitTransactionWaitingTime: +(process.env.MN_TX_SUBMIT_WAITING_TIME) || 1000
     },
     reBootstrapWaitingTime: +(process.env.BOOTSTRAP_FAILURE_WAIT_TIME) || 3000000,
     notification: {
