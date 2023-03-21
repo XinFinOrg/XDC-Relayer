@@ -9,3 +9,4 @@ loadtests
 docker-compose.yml
 LICENSE
 README.md
+.env

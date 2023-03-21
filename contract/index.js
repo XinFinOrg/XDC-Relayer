@@ -4,7 +4,7 @@ const Web3 = require("web3");
 const prompt = require("prompt");
 const subnetContract = require("./subnet.json");
 
-var mainnetUrl = "http://54.166.158.18:8545"; // To be replaced by any devnet node address
+var mainnetUrl = "http://34.235.128.245:8545"; // To be replaced by any devnet node address
 var smartContractAddress = "0x16da2C7caf46D0d7270d68e590A992A90DfcF7ee";
 
 (async() => {
