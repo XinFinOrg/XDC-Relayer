@@ -75,10 +75,11 @@ export class MainnetClient {
   // Below shall be given height provide the SM hash
   async getBlockHashByNumber(height: number): Promise<string> {
     try {
-      const { hash } = await this.web3.eth.getBlock(height);
-      return hash;
+      const result = await this.smartContractInstance.methods.getHeaderByNumber(height);
+      return result[0];
     } catch (error) {
-      
+      console.error("Fail to get block hash by number from mainnet", { height, message: error.message});
+      throw error;
     }
   }
 }
