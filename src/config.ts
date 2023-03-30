@@ -33,7 +33,8 @@ export interface Config {
   notification: NotificationConfig;
 }
 
-export const devMode = process.env.NODE_ENV != "production";
+const environment = process.env.NODE_ENV || "production";
+export const devMode = environment!= "production";
 
 const config: Config = {
     port: +(process.env.PORT || 3000),
