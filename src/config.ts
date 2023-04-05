@@ -44,16 +44,16 @@ const config: Config = {
       abnormalDetectionExpression: "0 */10 * * * *", // every 10 minutes,
     },
     subnet: {
-      url: process.env.SUBNET_URL || "",
-      fetchWaitingTime: +(process.env.SN_FETCHING_WAITING_TIME) || 1000
+      url: process.env.SUBNET_URL || "https://devnetstats.apothem.network/subnet",
+      fetchWaitingTime: +(process.env.SN_FETCHING_WAITING_TIME) || 0
     },
     mainnet: {
-      url: process.env.MAINNET_URL || "",
+      url: process.env.MAINNET_URL || "https://devnetstats.apothem.network/mainnet",
       smartContractAddress: process.env.SC_ADDRESS || "",
       accountPK: process.env.MAINNET_WALLET_PK || "",
-      submitTransactionWaitingTime: +(process.env.MN_TX_SUBMIT_WAITING_TIME) || 1000
+      submitTransactionWaitingTime: +(process.env.MN_TX_SUBMIT_WAITING_TIME) || 100
     },
-    reBootstrapWaitingTime: +(process.env.BOOTSTRAP_FAILURE_WAIT_TIME) || 3000000,
+    reBootstrapWaitingTime: +(process.env.BOOTSTRAP_FAILURE_WAIT_TIME) || 60000,
     notification: {
       slack: process.env.SLACK_WEBHOOK ? {
         incomingWebHook: process.env.SLACK_WEBHOOK

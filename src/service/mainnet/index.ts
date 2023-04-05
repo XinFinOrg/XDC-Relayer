@@ -51,21 +51,20 @@ export class MainnetClient {
     
   async submitTxs(results: Array<{encodedRLP: string, blockNum: number}>): Promise<void> {
     try {
-      for await (const {encodedRLP, blockNum} of results) {
-        const rlpEncodedHex = "0x" + Buffer.from(encodedRLP, "base64").toString("hex");
-        const transactionToBeSent = await this.smartContractInstance.methods.receiveHeader(rlpEncodedHex);
-        const gas = await transactionToBeSent.estimateGas({from: this.mainnetAccount.address});
-        const options = {
-          to: transactionToBeSent._parent._address,
-          data: transactionToBeSent.encodeABI(),
-          gas,
-          gasPrice: TRANSACTION_GAS_NUMBER
-        };
-        const signed = await this.web3.eth.accounts.signTransaction(options, this.mainnetAccount.privateKey);
-        await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
-        console.info(`Successfully submitted the subnet block ${blockNum} as tx into mainnet`);
-        await sleep(this.mainnetConfig.submitTransactionWaitingTime);
-      } 
+      if (!results.length) return;
+      const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex"));
+      const transactionToBeSent = await this.smartContractInstance.methods.receiveHeader(encodedHexArray);
+      const gas = await transactionToBeSent.estimateGas({from: this.mainnetAccount.address});
+      const options = {
+        to: transactionToBeSent._parent._address,
+        data: transactionToBeSent.encodeABI(),
+        gas,
+        gasPrice: TRANSACTION_GAS_NUMBER
+      };
+      const signed = await this.web3.eth.accounts.signTransaction(options, this.mainnetAccount.privateKey);
+      await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+      console.info(`Successfully submitted the subnet block up to ${results[-1].blockNum} as tx into mainnet`);
+      await sleep(this.mainnetConfig.submitTransactionWaitingTime);
     } catch (error) {
       console.error("Fail to submit transactions into mainnet", {message: error.message});
       throw error;
