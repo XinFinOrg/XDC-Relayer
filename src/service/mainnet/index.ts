@@ -63,7 +63,7 @@ export class MainnetClient {
       };
       const signed = await this.web3.eth.accounts.signTransaction(options, this.mainnetAccount.privateKey);
       await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
-      console.info(`Successfully submitted the subnet block up to ${results[-1].blockNum} as tx into mainnet`);
+      console.info(`Successfully submitted the subnet block up to ${results[results.length-1].blockNum} as tx into mainnet`);
       await sleep(this.mainnetConfig.submitTransactionWaitingTime);
     } catch (error) {
       console.error("Fail to submit transactions into mainnet", {message: error.message});
