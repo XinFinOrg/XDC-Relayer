@@ -4,7 +4,7 @@ import {AbiItem} from "web3-utils";
 import { Account } from "web3-core";
 import { MainnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
-import subnetContract from "../../../contract/subnet.json";
+import { abi } from "./contract";
 
 export interface SmartContractData {
   smartContractHash: string;
@@ -22,7 +22,7 @@ export class MainnetClient {
   private mainnetConfig: MainnetConfig;
   constructor(config: MainnetConfig) {
     this.web3 = (new Web3(config.url));
-    this.smartContractInstance = new this.web3.eth.Contract(subnetContract.abi as AbiItem[], config.smartContractAddress);
+    this.smartContractInstance = new this.web3.eth.Contract(abi as AbiItem[], config.smartContractAddress);
     this.mainnetAccount = this.web3.eth.accounts.privateKeyToAccount(config.accountPK);
     this.mainnetConfig = config;
   }
