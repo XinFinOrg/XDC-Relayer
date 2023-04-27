@@ -6,7 +6,7 @@
         "start:dev": "nodemon --ignore tests/ --watch src -e ts,tsx --exec ts-node src/server.ts",
         "build-ts": "tsc",
         "lint": "tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
-        "serve": "node dist/src/server.js",
+        "serve": "node dist/server.js",
         "build": "npm run build-ts",
         "start": "npm run serve",
         "test": "jest",
