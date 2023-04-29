@@ -1,9 +1,6 @@
-name: CI
+name: Build and Push via Master
 
 on:
-  pull_request:
-    branches:    
-      - master
   push:
     branches:    
       - master
