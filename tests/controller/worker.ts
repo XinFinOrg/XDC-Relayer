@@ -123,10 +123,10 @@ test("Should submit transactions normally for large gaps", async () => {
   worker.mainnetClient = mockMainnetClient as any;
   const success = await worker.bootstrap();
   expect(success).toBe(true);
-  expect(mockMainnetClient.submitTxs).toHaveBeenCalledTimes(10);
-  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(1, 7, 10);
-  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(2, 17, 10);
-  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(3, 27, 10);
+  expect(mockMainnetClient.submitTxs).toHaveBeenCalledTimes(4);
+  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(1, 7, 30);
+  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(2, 37, 30);
+  expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenNthCalledWith(3, 67, 30);
   expect(mockSubnetClient.bulkGetRlpEncodedHeaders).toHaveBeenLastCalledWith(97, 4);
 });
 

@@ -10,7 +10,8 @@ import { ForkingError } from "./../errors/forkingError";
 import { Nofications } from "../service/notification";
 
 
-const MAX_FETCH_BLOCK_SIZE = 10;
+const MAX_FETCH_BLOCK_SIZE = 30;
+
 const chunkByMaxFetchSize = chunkBy(MAX_FETCH_BLOCK_SIZE);
 export class Worker {
   cron: CronJob;
