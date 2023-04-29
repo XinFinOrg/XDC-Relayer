@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    name: Build the project
+    name: Test and build the project
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
