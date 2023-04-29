@@ -23,8 +23,8 @@ export class EventBus {
         // Only trigger the normal operation if bootstrap has completed successfully
         this.triggerEvent(EventBusNames.SYNC);
       } else {
-        // Whenever the service failed to bootstrap, we will keep the service down for 5 minutes before retrying
-        console.error("Error while bootstraping, system will go into sleep mode for 5 minutes before re-processing!");
+        // Whenever the service failed to bootstrap, we will keep the service down for few minutes before retrying
+        console.error(`Error while bootstraping, system will go into sleep mode for ${config.reBootstrapWaitingTime/1000/60} minutes before re-processing!`);
         await sleep(config.reBootstrapWaitingTime);
         this.triggerEvent(EventBusNames.BOOTSTRAP);    
       }

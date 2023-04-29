@@ -53,7 +53,7 @@ const config: Config = {
       accountPK: process.env.MAINNET_WALLET_PK || "",
       submitTransactionWaitingTime: +(process.env.MN_TX_SUBMIT_WAITING_TIME) || 100
     },
-    reBootstrapWaitingTime: +(process.env.BOOTSTRAP_FAILURE_WAIT_TIME) || 60000,
+    reBootstrapWaitingTime: +(process.env.BOOTSTRAP_FAILURE_WAIT_TIME) || 12000,
     notification: {
       slack: process.env.SLACK_WEBHOOK ? {
         incomingWebHook: process.env.SLACK_WEBHOOK
