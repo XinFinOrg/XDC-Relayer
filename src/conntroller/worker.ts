@@ -35,7 +35,7 @@ export class Worker {
         // Pull subnet's latest committed block
         const lastSubmittedSubnetBlock = await this.cache.getLastSubmittedSubnetHeader();
         const lastCommittedBlockInfo = await this.subnetService.getLastCommittedBlockInfo();
-        this.submitTxs(lastSubmittedSubnetBlock.subnetBlockNumber, lastCommittedBlockInfo.subnetBlockNumber);
+        await this.submitTxs(lastSubmittedSubnetBlock.subnetBlockNumber, lastCommittedBlockInfo.subnetBlockNumber);
         
         this.cache.setLastSubmittedSubnetHeader(lastCommittedBlockInfo);  
       } catch (error) {
@@ -43,7 +43,7 @@ export class Worker {
         if (error instanceof ForkingError) {
           this.notification.postForkingErrorMessage(error.message);
         }
-        onAbnormalDetected();
+        //onAbnormalDetected();
       }
     });
     
@@ -51,7 +51,7 @@ export class Worker {
       if (this.isBootstraping) return;
       console.info("🏥 Executing abnormal Detection by restart the bootstrap periodically");
       // Trigger the callback to initiatiate the bootstrap in event bus again
-      onAbnormalDetected();
+      // onAbnormalDetected();
     });
   }
 
