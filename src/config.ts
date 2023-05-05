@@ -40,7 +40,7 @@ const config: Config = {
     port: +(process.env.PORT || 3000),
     devMode: devMode,
     cronJob: {
-      jobExpression: "*/10 * * * * *", // every 10s
+      jobExpression: "*/20 * * * * *", // every 20s
       abnormalDetectionExpression: "0 */10 * * * *", // every 10 minutes,
     },
     subnet: {
