@@ -209,7 +209,6 @@ test("Should pass successfully if mainnet SM is ahead of subnet and matches the 
   expect(success).toBe(true);
 });
 
-
 test("Should start normal cron job", async () => {
   workerConfig.cronJob.jobExpression = "*/02 * * * * *";
   const worker = new Worker(workerConfig);
