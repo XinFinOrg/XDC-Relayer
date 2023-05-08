@@ -48,7 +48,7 @@ export class Worker {
   }
   
   async getLastSubmittedSubnetHeader(): Promise<SubnetBlockInfo> {
-    const lastSubmittedSubnetBlock = await this.cache.getLastSubmittedSubnetHeader();
+    const lastSubmittedSubnetBlock = this.cache.getLastSubmittedSubnetHeader();
     if (lastSubmittedSubnetBlock) return lastSubmittedSubnetBlock;
     // Else, our cache don't have such data
     const smartContractData = await this.mainnetClient.getLastAudittedBlock();
