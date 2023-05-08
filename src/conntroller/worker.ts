@@ -15,7 +15,6 @@ const MAX_FETCH_BLOCK_SIZE = 30;
 const chunkByMaxFetchSize = chunkBy(MAX_FETCH_BLOCK_SIZE);
 export class Worker {
   cron: CronJob;
-  abnormalDetectionCronJob: CronJob;
   mainnetClient: MainnetClient;
   subnetService: SubnetService;
   isBootstraping: boolean;
@@ -35,34 +34,28 @@ export class Worker {
         // Pull subnet's latest committed block
         const lastSubmittedSubnetBlock = await this.cache.getLastSubmittedSubnetHeader();
         const lastCommittedBlockInfo = await this.subnetService.getLastCommittedBlockInfo();
+        if (lastCommittedBlockInfo.subnetBlockNumber <= lastSubmittedSubnetBlock.subnetBlockNumber) {
+          console.info(`Already on the latest, nothing to subnet, Subnet latest: ${lastCommittedBlockInfo.subnetBlockNumber}, smart contract latest: ${lastSubmittedSubnetBlock.subnetBlockNumber}`);
+          return;
+        }
         await this.submitTxs(lastSubmittedSubnetBlock.subnetBlockNumber, lastCommittedBlockInfo.subnetBlockNumber);
-        
         this.cache.setLastSubmittedSubnetHeader(lastCommittedBlockInfo);  
       } catch (error) {
         console.error("Fail to run cron job normally", {message: error.message});
-        if (error instanceof ForkingError) {
-          this.notification.postForkingErrorMessage(error.message);
-        }
-        //onAbnormalDetected();
+        this.postNotifications(error);
+        onAbnormalDetected();
       }
-    });
-    
-    this.abnormalDetectionCronJob = new CronJob(config.cronJob.abnormalDetectionExpression, async () => {
-      if (this.isBootstraping) return;
-      console.info("🏥 Executing abnormal Detection by restart the bootstrap periodically");
-      // Trigger the callback to initiatiate the bootstrap in event bus again
-      // onAbnormalDetected();
     });
   }
 
   async bootstrap(): Promise<boolean> {
+    
     let success = false;
     try {
-      this.cache.cleanCache();
-      this.isBootstraping = true;
       // Clean timers
       this.cron.stop();
-      this.abnormalDetectionCronJob.stop();
+      this.cache.cleanCache();
+      this.isBootstraping = true;
       // Pull latest confirmed tx from mainnet
       const smartContractData = await this.mainnetClient.getLastAudittedBlock();
       // Pull latest confirm block from subnet
@@ -78,18 +71,15 @@ export class Worker {
       success = true;
     } catch (error) {
       console.error("Fail to bootstrap", {message: error.message});
-      if (error instanceof ForkingError) {
-        this.notification.postForkingErrorMessage(error.message);
-      }
+      this.postNotifications(error);
     }
     this.isBootstraping = false;
     return success;
   }
   
-  async synchronization(): Promise<void> {
+  synchronization(): void {
     console.info("Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet");
-    this.cron.start();
-    this.abnormalDetectionCronJob.start();
+    return this.cron.start();
   }
   
   // This method does all the necessary verifications before submit blocks as transactions into mainnet XDC
@@ -180,5 +170,13 @@ export class Worker {
     }
     console.log("Sync completed!");
     return;
+  }
+  
+  private postNotifications(error: Error) {
+    if (error instanceof ForkingError) {
+      this.notification.postForkingErrorMessage(error.message);
+    } else {
+      this.notification.postErrorMessage(error.message);
+    }
   }
 }

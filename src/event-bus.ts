@@ -33,7 +33,7 @@ export class EventBus {
     
     this.emitter.on(EventBusNames.SYNC, async () => {
       console.info("👍 Received SYNC events");
-      await this.worker.synchronization();
+      this.worker.synchronization();
     });
   }
 

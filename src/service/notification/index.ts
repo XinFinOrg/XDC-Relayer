@@ -2,7 +2,8 @@ import { NotificationConfig } from "./../../config";
 import { SlackNotification } from "./slack";
 import { Cache } from "../cache";
 
-const NOTIFICATION_DELAY_PERIOD = 1500; // Only send message every 15 minutes
+const FORKING_NOTIFICATION_DELAY_PERIOD = 3000; // Only send message every 30 minutes
+const DEFAULT_NOTIFICATION_DELAY_PERIOD = 72000; // Only send message every 12 hours
 export class Nofications {
   private notificationChannels: any[] = [];
   private cache: Cache;
@@ -22,14 +23,30 @@ export class Nofications {
       if ( this.devMode ) {
         return;
       }
-      const isSet = this.cache.setForkingNotificationCountdown(NOTIFICATION_DELAY_PERIOD);
+      const isSet = this.cache.setForkingNotificationCountdown(FORKING_NOTIFICATION_DELAY_PERIOD);
       if (isSet) {
         this.notificationChannels.forEach(async c => {
           await c.postForkingErrorMessage(message);
         });  
       }
     } catch (error) {
-      console.error("Fail to publish message to the dedicated notification channels", error);
+      console.error("Fail to publish message to the dedicated notification channels", error?.message);
+    }
+  }
+  
+  async postErrorMessage(message: string): Promise<void> {
+    try {
+      if ( this.devMode ) {
+        return;
+      }
+      const isSet = this.cache.setForkingNotificationCountdown(DEFAULT_NOTIFICATION_DELAY_PERIOD);
+      if (isSet) {
+        this.notificationChannels.forEach(async c => {
+          await c.postErrorMessage(message);
+        });  
+      }
+    } catch (error) {
+      console.error("Fail to publish default error message to the dedicated notification channels", error?.message);
     }
   }
 }
