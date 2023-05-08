@@ -75,7 +75,6 @@ export class Worker {
     } catch (error) {
       this.postNotifications(error);
       console.error(`Error while bootstraping, system will go into sleep mode for ${this.config.reBootstrapWaitingTime/1000/60} minutes before re-processing!, message: ${error?.message}`);
-      
       return false;
     }
   }
@@ -180,10 +179,14 @@ export class Worker {
   }
   
   private postNotifications(error: Error) {
-    if (error instanceof ForkingError) {
-      this.notification.postForkingErrorMessage(error.message);
-    } else {
-      this.notification.postErrorMessage(error.message);
+    try {
+      if (error instanceof ForkingError) {
+        this.notification.postForkingErrorMessage(error.message);
+      } else {
+        this.notification.postErrorMessage(error.message);
+      }  
+    } catch (error) {
+      console.error("Fail to publish notifications");
     }
   }
 }
