@@ -33,4 +33,31 @@ export class SlackNotification {
     });
   }
   
+  async postErrorMessage(message: string): Promise<void>{
+    await axios.post(this.webHookUrl, {
+      "text": ":no_entry: Relayer unable to sync!",
+      "blocks": [
+      	{
+      		"type": "section",
+      		"text": {
+      			"type": "mrkdwn",
+      			"text": ":no_entry: Relayer unable to sync!"
+      		}
+      	},
+      	{
+      		"type": "section",
+      		"block_id": "section567",
+      		"text": {
+      			"type": "mrkdwn",
+      			"text": message
+      		}
+      	},
+      ]
+    }, {
+      headers: {
+        "Content-type": "application/json"
+      }
+    });
+  }
+  
 }

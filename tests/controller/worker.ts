@@ -284,5 +284,4 @@ test("Should start normal cron job", async () => {
   expect(cachedValue?.subnetBlockNumber).toEqual(11);
   expect(cachedValue?.subnetBlockRound).toEqual(12);
   worker.cron.stop();
-  worker.abnormalDetectionCronJob.stop();
 });
