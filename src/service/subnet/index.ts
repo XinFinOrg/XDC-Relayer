@@ -23,6 +23,10 @@ export class SubnetService {
   async getLastCommittedBlockInfo() : Promise<SubnetBlockInfo> {
     try {
       const { Hash, Number, Round, EncodedRLP, ParentHash }  = await this.web3.xdcSubnet.getV2Block("committed");
+      if (!Hash || !Number || !EncodedRLP || !ParentHash ) {
+        console.error("Invalid block hash or height or encodedRlp or ParentHash received", Hash, Number, EncodedRLP, ParentHash);
+        throw new Error("Unable to get latest committed block information");
+      }
       return {
         subnetBlockHash: Hash,
         subnetBlockNumber: Number,
