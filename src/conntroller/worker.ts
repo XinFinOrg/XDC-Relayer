@@ -4,7 +4,7 @@ import { CronJob } from "cron";
 import { SubnetBlockInfo, SubnetService } from "../service/subnet";
 import { MainnetClient} from "../service/mainnet";
 import { Config } from "../config";
-import { chunkBy } from "../utils";
+import { chunkBy, sleep } from "../utils";
 import { Cache } from "../service/cache";
 import { ForkingError } from "./../errors/forkingError";
 import { Nofications } from "../service/notification";
@@ -17,22 +17,21 @@ export class Worker {
   cron: CronJob;
   mainnetClient: MainnetClient;
   subnetService: SubnetService;
-  isBootstraping: boolean;
   cache: Cache;
   notification: Nofications;
+  config: Config;
 
-  constructor(config: Config, onAbnormalDetected: () => void) {
+  constructor(config: Config) {
     this.cache = new Cache();
-    this.isBootstraping = false;
+    this.config = config;
     this.mainnetClient = new MainnetClient(config.mainnet);
     this.subnetService = new SubnetService(config.subnet);
     this.notification = new Nofications(config.notification, this.cache, config.devMode);
     this.cron = new CronJob(config.cronJob.jobExpression, async () => {
       try {
-        if (this.isBootstraping) return;
         console.info("⏰ Executing normal flow periodically");
         // Pull subnet's latest committed block
-        const lastSubmittedSubnetBlock = await this.cache.getLastSubmittedSubnetHeader();
+        const lastSubmittedSubnetBlock = await this.getLastSubmittedSubnetHeader();
         const lastCommittedBlockInfo = await this.subnetService.getLastCommittedBlockInfo();
         if (lastCommittedBlockInfo.subnetBlockNumber <= lastSubmittedSubnetBlock.subnetBlockNumber) {
           console.info(`Already on the latest, nothing to subnet, Subnet latest: ${lastCommittedBlockInfo.subnetBlockNumber}, smart contract latest: ${lastSubmittedSubnetBlock.subnetBlockNumber}`);
@@ -43,19 +42,23 @@ export class Worker {
       } catch (error) {
         console.error("Fail to run cron job normally", {message: error.message});
         this.postNotifications(error);
-        onAbnormalDetected();
+        this.synchronization();
       }
     });
   }
-
+  
+  async getLastSubmittedSubnetHeader(): Promise<SubnetBlockInfo> {
+    const lastSubmittedSubnetBlock = await this.cache.getLastSubmittedSubnetHeader();
+    if (lastSubmittedSubnetBlock) return lastSubmittedSubnetBlock;
+    // Else, our cache don't have such data
+    const smartContractData = await this.mainnetClient.getLastAudittedBlock();
+    return await this.subnetService.getCommittedBlockInfoByNum(smartContractData.smartContractHeight);
+  }
+  
   async bootstrap(): Promise<boolean> {
-    
-    let success = false;
     try {
-      // Clean timers
-      this.cron.stop();
+      // Clean timer
       this.cache.cleanCache();
-      this.isBootstraping = true;
       // Pull latest confirmed tx from mainnet
       const smartContractData = await this.mainnetClient.getLastAudittedBlock();
       // Pull latest confirm block from subnet
@@ -68,17 +71,21 @@ export class Worker {
         // Store subnet block into cache
         this.cache.setLastSubmittedSubnetHeader(lastestSubnetCommittedBlock);
       }
-      success = true;
+      return true;
     } catch (error) {
-      console.error("Fail to bootstrap", {message: error.message});
       this.postNotifications(error);
+      console.error(`Error while bootstraping, system will go into sleep mode for ${this.config.reBootstrapWaitingTime/1000/60} minutes before re-processing!, message: ${error?.message}`);
+      
+      return false;
     }
-    this.isBootstraping = false;
-    return success;
   }
   
-  synchronization(): void {
+  async synchronization(): Promise<void> {
     console.info("Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet");
+    this.cron.stop();
+    while(!(await this.bootstrap())) {
+      await sleep(this.config.reBootstrapWaitingTime);
+    }
     return this.cron.start();
   }
   

@@ -1,4 +1,3 @@
-import { EventBus } from "./event-bus";
 import Koa from "koa";
 import bodyParser from "koa-bodyparser";
 import cors from "@koa/cors";
@@ -6,9 +5,10 @@ import winston from "winston";
 
 import { logger } from "./logger";
 import { config } from "./config";
+import { Worker } from "./conntroller/worker";
 
 const app = new Koa();
-const eventBus = new EventBus();
+const worker = new Worker(config);
 
 // Enable cors with default options
 app.use(cors());
@@ -19,7 +19,7 @@ app.use(logger(winston));
 // Enable bodyParser with default options
 app.use(bodyParser());
 
-app.listen(config.port, () => {
+app.listen(config.port, async () => {
     console.info(`Server running on port ${config.port}`);
-    eventBus.init();
+    await worker.synchronization();
 });
