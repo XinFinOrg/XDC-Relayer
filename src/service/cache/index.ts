@@ -4,6 +4,7 @@ import { CachingError } from "./../../errors/cachingError";
 
 const SUBNET_LAST_SUBMITTED_HEADER = "subnet_last_submitted_header";
 const LAST_FORKING_NOTIFICATION_SENT = "last_forking_sent";
+const LAST_ERROR_NOTIFICATION_SENT = "last_error_sent";
 
 export class Cache {
   private inMemoryCache: NodeCache;
@@ -41,6 +42,15 @@ export class Cache {
     const lastForking = this.inMemoryCache.get(LAST_FORKING_NOTIFICATION_SENT);
     if(!lastForking) {
       this.inMemoryCache.set(LAST_FORKING_NOTIFICATION_SENT, true, countdownTime);
+      return true;
+    }
+    return false;
+  }
+  
+  setErrorNotificationCountdown(countdownTime: number): boolean {
+    const lastForking = this.inMemoryCache.get(LAST_ERROR_NOTIFICATION_SENT);
+    if(!lastForking) {
+      this.inMemoryCache.set(LAST_ERROR_NOTIFICATION_SENT, true, countdownTime);
       return true;
     }
     return false;

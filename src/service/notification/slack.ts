@@ -16,57 +16,59 @@ export class SlackNotification {
   }
   
   async postForkingErrorMessage(message: string): Promise<void>{
-    await this.axiosInstance.post(this.webHookPath, {
-      "text": ":no_entry: Relayer detected forking!",
-      "blocks": [
-      	{
-      		"type": "section",
-      		"text": {
-      			"type": "mrkdwn",
-      			"text": ":no_entry: Relayer detected forking!"
-      		}
-      	},
-      	{
-      		"type": "section",
-      		"block_id": "section567",
-      		"text": {
-      			"type": "mrkdwn",
-      			"text": message
-      		}
-      	},
-      ]
-    }, {
-      headers: {
-        "Content-type": "application/json"
-      }
-    });
+    try {
+      await this.axiosInstance.post(this.webHookPath, {
+        "text": ":no_entry: Relayer detected forking!",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": ":no_entry: Relayer detected forking!"
+            }
+          },
+          {
+            "type": "section",
+            "block_id": "section567",
+            "text": {
+              "type": "mrkdwn",
+              "text": message
+            }
+          },
+        ]
+      });
+    } catch (error) {
+      console.error("Fail to post forking error message", error?.message);
+    }
+    
   }
   
   async postErrorMessage(message: string): Promise<void>{
-    await this.axiosInstance.post(this.webHookPath, {
-      "text": ":no_entry: Relayer unable to sync!",
-      "blocks": [
-      	{
-      		"type": "section",
-      		"text": {
-      			"type": "mrkdwn",
-      			"text": ":no_entry: Relayer unable to sync!"
-      		}
-      	},
-      	{
-      		"type": "section",
-      		"block_id": "section567",
-      		"text": {
-      			"type": "mrkdwn",
-      			"text": message
-      		}
-      	},
-      ]
-    }, {
-      headers: {
-        "Content-type": "application/json"
-      }
-    });
+    try {
+      await this.axiosInstance.post(this.webHookPath, {
+        "text": ":no_entry: Relayer unable to sync!",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": ":no_entry: Relayer unable to sync!"
+            }
+          },
+          {
+            "type": "section",
+            "block_id": "section567",
+            "text": {
+              "type": "mrkdwn",
+              "text": message
+            }
+          },
+        ]
+      });  
+    } catch (error) {
+      console.error("Fail to post general relayer error message", error?.message);
+    }
+    
   }
   
 }
