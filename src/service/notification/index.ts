@@ -3,7 +3,7 @@ import { SlackNotification } from "./slack";
 import { Cache } from "../cache";
 
 const FORKING_NOTIFICATION_DELAY_PERIOD = 3000; // Only send message every 30 minutes
-const DEFAULT_NOTIFICATION_DELAY_PERIOD = 72000; // Only send message every 12 hours
+const DEFAULT_NOTIFICATION_DELAY_PERIOD = 6000; // Only send message every 12 hours
 export class Nofications {
   private notificationChannels: any[] = [];
   private cache: Cache;

@@ -1,4 +1,5 @@
 import Web3 from "web3";
+import { HttpsAgent } from "agentkeepalive";
 import { SubnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
 import { subnetExtensions, Web3WithExtension } from "./extensions";
@@ -16,8 +17,11 @@ export class SubnetService {
   private subnetConfig: SubnetConfig;
   
   constructor(config: SubnetConfig) {
+    const keepaliveAgent = new HttpsAgent();
+    const provider = new Web3.providers.HttpProvider(config.url, { keepAlive: true, agent: {https: keepaliveAgent } });
+    
     this.subnetConfig = config;
-    this.web3 = (new Web3(config.url)).extend(subnetExtensions);
+    this.web3 = (new Web3(provider)).extend(subnetExtensions);
   }
   
   async getLastCommittedBlockInfo() : Promise<SubnetBlockInfo> {

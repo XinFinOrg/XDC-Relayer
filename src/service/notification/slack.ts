@@ -1,13 +1,22 @@
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
+import { HttpsAgent } from "agentkeepalive";
 
 export class SlackNotification {
-  webHookUrl: string;
-  constructor(webHookUrl: string) {
-    this.webHookUrl = webHookUrl;
+  axiosInstance: AxiosInstance;
+  webHookPath: string;
+  constructor(webHookPath: string) {
+    this.webHookPath = webHookPath;
+    const keepaliveAgent = new HttpsAgent();
+    this.axiosInstance = axios.create({
+      baseURL: "https://hooks.slack.com/services",
+      timeout: 5000,
+      headers: {"Content-type": "application/json"},
+      httpsAgent: keepaliveAgent
+    });
   }
   
   async postForkingErrorMessage(message: string): Promise<void>{
-    await axios.post(this.webHookUrl, {
+    await this.axiosInstance.post(this.webHookPath, {
       "text": ":no_entry: Relayer detected forking!",
       "blocks": [
       	{
@@ -34,7 +43,7 @@ export class SlackNotification {
   }
   
   async postErrorMessage(message: string): Promise<void>{
-    await axios.post(this.webHookUrl, {
+    await this.axiosInstance.post(this.webHookPath, {
       "text": ":no_entry: Relayer unable to sync!",
       "blocks": [
       	{

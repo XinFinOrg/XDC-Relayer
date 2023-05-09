@@ -53,7 +53,7 @@ Create a .env file (or just rename the .example.env) containing all the env vari
 3. `SC_ADDRESS` : This is the smart contract address for this subnet that has been uploaded in the mainnet.
 4. `MAINNET_WALLET_PK` : This is the wallet key that will be used for submit subnet data into mainnet. You will need to have credits in it first.
 5. `SLACK_WEBHOOK` : (Optional) If relayer detected forking of your subnet, this is the URL where we will push alerting message to. You are required to set up slack bot and install it in the relevant channel first. For details, see slack doc: https://api.slack.com/messaging/webhooks \n
-Once you are done with the slack setup, find the slack webhook url and put it here. It shall look like `https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX`
+Once you are done with the slack setup, find the slack webhook url and put it here. It shall look like `https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX`  We only need the ones after `https://hooks.slack.com/services/`
 
 ## Getting TypeScript
 TypeScript itself is simple to add to any project with `npm`.

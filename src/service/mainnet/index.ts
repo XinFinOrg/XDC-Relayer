@@ -1,6 +1,7 @@
 import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 import {AbiItem} from "web3-utils";
+import { HttpsAgent } from "agentkeepalive";
 import { Account } from "web3-core";
 import { MainnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
@@ -20,8 +21,11 @@ export class MainnetClient {
   private smartContractInstance: Contract;
   private mainnetAccount: Account;
   private mainnetConfig: MainnetConfig;
+  
   constructor(config: MainnetConfig) {
-    this.web3 = (new Web3(config.url));
+    const keepaliveAgent = new HttpsAgent();
+    const provider = new Web3.providers.HttpProvider(config.url, { keepAlive: true, agent: {https: keepaliveAgent } });
+    this.web3 = (new Web3(provider));
     this.smartContractInstance = new this.web3.eth.Contract(abi as AbiItem[], config.smartContractAddress);
     this.mainnetAccount = this.web3.eth.accounts.privateKeyToAccount(config.accountPK);
     this.mainnetConfig = config;
