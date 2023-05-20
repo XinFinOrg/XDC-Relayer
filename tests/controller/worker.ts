@@ -1,15 +1,17 @@
+import bunyan from "bunyan";
 import { sleep } from "./../../src/utils/index";
 import { config } from "../../src/config";
 import { Worker } from "../../src/conntroller/worker";
 
 let workerConfig: any;
+const logger = bunyan.createLogger({name: "test"});
 beforeEach(() => {
   workerConfig = config;
   jest.clearAllMocks();
 });
 
 test("Should bootstrap successfully for same block hash", async () => {
-  const worker = new Worker(workerConfig);
+  const worker = new Worker(workerConfig, logger);
   
   const mockMainnetClient = {
     getLastAudittedBlock: jest.fn().mockResolvedValue({
@@ -35,7 +37,7 @@ test("Should bootstrap successfully for same block hash", async () => {
 });
 
 test("Should submit transactions normally for small gaps", async () => {
-  const worker = new Worker(workerConfig);
+  const worker = new Worker(workerConfig, logger);
   
   const mockedResultsToSubmit = Array(6).map((_, index) => {
     return {
@@ -79,7 +81,7 @@ test("Should submit transactions normally for small gaps", async () => {
 });
 
 test("Should submit transactions normally for large gaps", async () => {
-  const worker = new Worker(workerConfig);
+  const worker = new Worker(workerConfig, logger);
   const mockedResultsToSubmit = Array(10).map((_, index) => {
     return {
       encodedRLP: "xxx",
@@ -128,7 +130,7 @@ test("Should submit transactions normally for large gaps", async () => {
 });
 
 test("Should fail if same block height but different hash received", async () => {
-  const worker = new Worker(workerConfig);
+  const worker = new Worker(workerConfig, logger);
   const mockMainnetClient = {
     getLastAudittedBlock: jest.fn().mockResolvedValue({
       smartContractHash: "0x666",
@@ -154,7 +156,7 @@ test("Should fail if same block height but different hash received", async () =>
 
 
 test("Should fail if fetch same block height from subnet have different hash than mainnent", async () => {
-  const worker = new Worker(workerConfig);
+  const worker = new Worker(workerConfig, logger);
   const mockMainnetClient = {
     getLastAudittedBlock: jest.fn().mockResolvedValue({
       smartContractHash: "0x666",
@@ -183,7 +185,7 @@ test("Should fail if fetch same block height from subnet have different hash tha
 });
 
 test("Should pass successfully if mainnet SM is ahead of subnet and matches the hashes", async () => {
-  const worker = new Worker(workerConfig);
+  const worker = new Worker(workerConfig, logger);
   const mockMainnetClient = {
     getLastAudittedBlock: jest.fn().mockResolvedValue({
       smartContractHash: "0x999",
@@ -211,7 +213,7 @@ test("Should pass successfully if mainnet SM is ahead of subnet and matches the 
 
 test("Should start normal cron job", async () => {
   workerConfig.cronJob.jobExpression = "*/02 * * * * *";
-  const worker = new Worker(workerConfig);
+  const worker = new Worker(workerConfig, logger);
   const mockedResultsToSubmit = [{
     encodedRLP: "first",
     blockNum: 4
@@ -260,7 +262,7 @@ test("Should start normal cron job", async () => {
   worker.subnetService = mockSubnetClient as any;
   worker.mainnetClient = mockMainnetClient as any;
   const success = await worker.bootstrap();
-  let cachedValue = worker.cache.getLastSubmittedSubnetHeader();
+  const cachedValue = worker.cache.getLastSubmittedSubnetHeader();
   expect(cachedValue?.subnetBlockHash).toEqual("0x10");
   expect(cachedValue?.subnetBlockNumber).toEqual(10);
   expect(cachedValue?.subnetBlockRound).toEqual(10);
