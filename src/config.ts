@@ -25,7 +25,6 @@ export interface Config {
   devMode: boolean;
   cronJob: {
     jobExpression: string;
-    abnormalDetectionExpression: string;
   };
   subnet: SubnetConfig;
   mainnet: MainnetConfig;
@@ -41,7 +40,6 @@ const config: Config = {
     devMode: devMode,
     cronJob: {
       jobExpression: "*/20 * * * * *", // every 20s
-      abnormalDetectionExpression: "0 */10 * * * *", // every 10 minutes,
     },
     subnet: {
       url: process.env.SUBNET_URL || "https://devnetstats.apothem.network/subnet",

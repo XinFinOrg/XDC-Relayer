@@ -3,9 +3,11 @@ import { Contract } from "web3-eth-contract";
 import {AbiItem} from "web3-utils";
 import { HttpsAgent } from "agentkeepalive";
 import { Account } from "web3-core";
+import bunyan from "bunyan";
 import { MainnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
 import { abi } from "./contract";
+
 
 export interface SmartContractData {
   smartContractHash: string;
@@ -21,8 +23,10 @@ export class MainnetClient {
   private smartContractInstance: Contract;
   private mainnetAccount: Account;
   private mainnetConfig: MainnetConfig;
+  logger: bunyan;
   
-  constructor(config: MainnetConfig) {
+  constructor(config: MainnetConfig, logger: bunyan) {
+    this.logger = logger;
     const keepaliveAgent = new HttpsAgent();
     const provider = new Web3.providers.HttpProvider(config.url, { keepAlive: true, agent: {https: keepaliveAgent } });
     this.web3 = (new Web3(provider));
@@ -40,7 +44,7 @@ export class MainnetClient {
       const [latestBlockHash, latestBlockHeight] = result[0];
       const [latestSmComittedHash, latestSmHeight] = result[1];
       if (!latestBlockHash || !latestBlockHeight || !latestSmComittedHash || !latestSmHeight) {
-        console.error("Invalid block hash or height received", latestBlockHash, latestBlockHeight, latestSmComittedHash, latestSmHeight);
+        this.logger.error("Invalid block hash or height received", latestBlockHash, latestBlockHeight, latestSmComittedHash, latestSmHeight);
         throw new Error("Unable to get last auditted block informations");
       }
       return {
@@ -48,7 +52,7 @@ export class MainnetClient {
         smartContractCommittedHash: latestSmComittedHash, smartContractCommittedHeight: parseInt(latestSmHeight)
       };
     } catch (error) {
-      console.error("Error while trying to fetch the last audited subnet's block in XDC mainnet", {message: error.message});
+      this.logger.error("Error while trying to fetch the last audited subnet's block in XDC mainnet", {message: error.message});
       throw error;
     }
   }
@@ -67,10 +71,10 @@ export class MainnetClient {
       };
       const signed = await this.web3.eth.accounts.signTransaction(options, this.mainnetAccount.privateKey);
       await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
-      console.info(`Successfully submitted the subnet block up to ${results[results.length-1].blockNum} as tx into mainnet`);
+      this.logger.info(`Successfully submitted the subnet block up to ${results[results.length-1].blockNum} as tx into mainnet`);
       await sleep(this.mainnetConfig.submitTransactionWaitingTime);
     } catch (error) {
-      console.error("Fail to submit transactions into mainnet", {message: error.message});
+      this.logger.error("Fail to submit transactions into mainnet", {message: error.message});
       throw error;
     }
   }
@@ -81,7 +85,7 @@ export class MainnetClient {
       const result = await this.smartContractInstance.methods.getHeaderByNumber(height);
       return result[0];
     } catch (error) {
-      console.error("Fail to get block hash by number from mainnet", { height, message: error.message});
+      this.logger.error("Fail to get block hash by number from mainnet", { height, message: error.message});
       throw error;
     }
   }

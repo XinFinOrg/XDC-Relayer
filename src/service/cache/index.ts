@@ -1,4 +1,5 @@
 import NodeCache from "node-cache";
+import bunyan from "bunyan";
 import { SubnetBlockInfo } from "../subnet";
 import { CachingError } from "./../../errors/cachingError";
 
@@ -7,9 +8,11 @@ const LAST_FORKING_NOTIFICATION_SENT = "last_forking_sent";
 const LAST_ERROR_NOTIFICATION_SENT = "last_error_sent";
 
 export class Cache {
+  logger: bunyan;
   private inMemoryCache: NodeCache;
   
-  constructor() {
+  constructor(logger: bunyan) {
+    this.logger = logger;
     this.inMemoryCache = new NodeCache();
   }
   
@@ -18,7 +21,7 @@ export class Cache {
     try {
       success = this.inMemoryCache.set(SUBNET_LAST_SUBMITTED_HEADER, header);
     } catch (error) {
-      console.error("Error while trying to get cached data from memory", error);
+      this.logger.error("Error while trying to get cached data from memory", error);
     }
     if (!success) {
       throw new CachingError("SET");
@@ -29,7 +32,7 @@ export class Cache {
     try {
       return this.inMemoryCache.get(SUBNET_LAST_SUBMITTED_HEADER);  
     } catch (error) {
-      console.error("Error while trying to get cached data from memory", error);
+      this.logger.error("Error while trying to get cached data from memory", error);
       throw new CachingError("GET");
     }
   }

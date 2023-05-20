@@ -8,6 +8,7 @@ import { chunkBy, sleep } from "../utils";
 import { Cache } from "../service/cache";
 import { ForkingError } from "./../errors/forkingError";
 import { Nofications } from "../service/notification";
+import bunyan from "bunyan";
 
 
 const MAX_FETCH_BLOCK_SIZE = 30;
@@ -20,27 +21,29 @@ export class Worker {
   cache: Cache;
   notification: Nofications;
   config: Config;
+  logger: bunyan;
 
-  constructor(config: Config) {
-    this.cache = new Cache();
+  constructor(config: Config, logger: bunyan) {
+    this.logger = logger;
     this.config = config;
-    this.mainnetClient = new MainnetClient(config.mainnet);
-    this.subnetService = new SubnetService(config.subnet);
-    this.notification = new Nofications(config.notification, this.cache, config.devMode);
+    this.cache = new Cache(logger);
+    this.mainnetClient = new MainnetClient(config.mainnet, logger);
+    this.subnetService = new SubnetService(config.subnet, logger);
+    this.notification = new Nofications(config.notification, this.cache, logger, config.devMode);
     this.cron = new CronJob(config.cronJob.jobExpression, async () => {
       try {
-        console.info("⏰ Executing normal flow periodically");
+        logger.info("⏰ Executing normal flow periodically");
         // Pull subnet's latest committed block
         const lastSubmittedSubnetBlock = await this.getLastSubmittedSubnetHeader();
         const lastCommittedBlockInfo = await this.subnetService.getLastCommittedBlockInfo();
         if (lastCommittedBlockInfo.subnetBlockNumber <= lastSubmittedSubnetBlock.subnetBlockNumber) {
-          console.info(`Already on the latest, nothing to subnet, Subnet latest: ${lastCommittedBlockInfo.subnetBlockNumber}, smart contract latest: ${lastSubmittedSubnetBlock.subnetBlockNumber}`);
+          logger.info(`Already on the latest, nothing to subnet, Subnet latest: ${lastCommittedBlockInfo.subnetBlockNumber}, smart contract latest: ${lastSubmittedSubnetBlock.subnetBlockNumber}`);
           return;
         }
         await this.submitTxs(lastSubmittedSubnetBlock.subnetBlockNumber, lastCommittedBlockInfo.subnetBlockNumber);
         this.cache.setLastSubmittedSubnetHeader(lastCommittedBlockInfo);  
       } catch (error) {
-        console.error("Fail to run cron job normally", {message: error.message});
+        logger.error("Fail to run cron job normally", {message: error.message});
         this.postNotifications(error);
         this.synchronization();
       }
@@ -74,13 +77,13 @@ export class Worker {
       return true;
     } catch (error) {
       this.postNotifications(error);
-      console.error(`Error while bootstraping, system will go into sleep mode for ${this.config.reBootstrapWaitingTime/1000/60} minutes before re-processing!, message: ${error?.message}`);
+      this.logger.error(`Error while bootstraping, system will go into sleep mode for ${this.config.reBootstrapWaitingTime/1000/60} minutes before re-processing!, message: ${error?.message}`);
       return false;
     }
   }
   
   async synchronization(): Promise<void> {
-    console.info("Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet");
+    this.logger.info("Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet");
     this.cron.stop();
     while(!(await this.bootstrap())) {
       await sleep(this.config.reBootstrapWaitingTime);
@@ -102,28 +105,28 @@ export class Worker {
       const subnetHashInSmartContract = await this.mainnetClient.getBlockHashByNumber(subnetBlockNumber);
     
       if (subnetHashInSmartContract != subnetBlockHash) {
-        console.error("⛔️ WARNING: Forking detected when smart contract is ahead of subnet");
+        this.logger.error("⛔️ WARNING: Forking detected when smart contract is ahead of subnet");
         throw new ForkingError(subnetBlockNumber, subnetHashInSmartContract, subnetBlockHash);
       }
-      console.info("Smart contract is ahead of subnet, nothing needs to be done, just wait");
+      this.logger.info("Smart contract is ahead of subnet, nothing needs to be done, just wait");
       return { shouldProcess: false };
     } else if (subnetBlockNumber == smartContractCommittedHeight) {
       if (smartContractCommittedHash != subnetBlockHash) {
-        console.error("⛔️ WARNING: Forking detected when subnet and smart contract having the same height");
+        this.logger.error("⛔️ WARNING: Forking detected when subnet and smart contract having the same height");
         throw new ForkingError(smartContractCommittedHeight, smartContractCommittedHash, subnetBlockHash);
       }
-      console.info("Smart contract committed and subnet are already in sync, nothing needs to be done, waiting for new blocks");
+      this.logger.info("Smart contract committed and subnet are already in sync, nothing needs to be done, waiting for new blocks");
       return { shouldProcess: false };
     } else {
       // Check the committed
       const auditedCommittedBlockInfoInSubnet = await this.subnetService.getCommittedBlockInfoByNum(smartContractCommittedHeight);
       if (auditedCommittedBlockInfoInSubnet.subnetBlockHash != smartContractCommittedHash) {
-        console.error("⛔️ WARNING: Forking detected when subnet is ahead of smart contract");
+        this.logger.error("⛔️ WARNING: Forking detected when subnet is ahead of smart contract");
         throw new ForkingError(smartContractCommittedHeight, smartContractCommittedHash, auditedCommittedBlockInfoInSubnet.subnetBlockHash);
       }
       // Verification for committed blocks are completed! We need to check where we shall start sync based on the last audited block (smartContractHash and height) in mainnet
       if (smartContractHash == subnetBlockHash) { // Same block height and hash
-        console.info("Smart contract latest and subnet are already in sync, nothing needs to be done, waiting for new blocks");
+        this.logger.info("Smart contract latest and subnet are already in sync, nothing needs to be done, waiting for new blocks");
         return { shouldProcess: false };
       } else if (subnetBlockNumber < smartContractHeight) { // This is when subnet is behind the mainnet latest auditted
         const subnetHashInSmartContract = await this.mainnetClient.getBlockHashByNumber(subnetBlockNumber);
@@ -133,7 +136,7 @@ export class Worker {
             shouldProcess: true, from: divergingHeight
           };
         }
-        console.warn("Subnet is behind mainnet latest auditted blocks! This usually means there is another relayer on a different node who is ahead of this relayer in terms of mining and submitting txs. OR there gonna be forking soon!");
+        this.logger.warn("Subnet is behind mainnet latest auditted blocks! This usually means there is another relayer on a different node who is ahead of this relayer in terms of mining and submitting txs. OR there gonna be forking soon!");
         return { shouldProcess: false };
       }
       // Below is the case where subnet is ahead of mainnet and we need to do some more checks before submit txs
@@ -168,13 +171,13 @@ export class Worker {
   private async submitTxs(from: number, to: number): Promise<void> {
     let startingBlockNumberToFetch = from + 1;
     const blocksToFetchInChunks = chunkByMaxFetchSize(to - from);
-    console.info(`Start syncing with smart contract from block ${startingBlockNumberToFetch} to ${to}`);
+    this.logger.info(`Start syncing with smart contract from block ${startingBlockNumberToFetch} to ${to}`);
     for await (const numOfBlocks of blocksToFetchInChunks) {
       const results = await this.subnetService.bulkGetRlpEncodedHeaders(startingBlockNumberToFetch, numOfBlocks);
       await this.mainnetClient.submitTxs(results);
       startingBlockNumberToFetch+=numOfBlocks;
     }
-    console.log("Sync completed!");
+    this.logger.info("Sync completed!");
     return;
   }
   
@@ -186,7 +189,7 @@ export class Worker {
         this.notification.postErrorMessage(error.message);
       }  
     } catch (error) {
-      console.error("Fail to publish notifications");
+      this.logger.error("Fail to publish notifications");
     }
   }
 }
