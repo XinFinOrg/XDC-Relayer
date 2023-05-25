@@ -1,6 +1,6 @@
 # XDC Relayer
 
-Relayer is a communication bridge between XDC mainnet and its subnet. It provides synchronisation feature to make sure subnet chain is audited on mainnet securely.
+Relayer is a communication bridge between XDC parent chain and its subnet. It provides synchronisation feature to make sure subnet chain is audited on parent chain securely.
 
 ## Pre-reqs
 To build and run this app locally you will need:
@@ -49,9 +49,9 @@ Create a .env file (or just rename the .example.env) containing all the env vari
  
 ### Find the value for important envs
 1. `SUBNET_URL` : This is the URL to your subnet with RPC port specified. e.g http://66.94.121.151:8545
-2. `MAINNET_URL` : This is the XDC mainnet URL with RPC port specified.
-3. `SC_ADDRESS` : This is the smart contract address for this subnet that has been uploaded in the mainnet.
-4. `MAINNET_WALLET_PK` : This is the wallet key that will be used for submit subnet data into mainnet. You will need to have credits in it first.
+2. `PARENTCHAIN_URL` : This is the XDC parent chain URL with RPC port specified.
+3. `SC_ADDRESS` : This is the smart contract address for this subnet that has been uploaded in the parent chain.
+4. `PARENTCHAIN_WALLET_PK` : This is the wallet key that will be used for submit subnet data into parent chain. You will need to have credits in it first.
 5. `SLACK_WEBHOOK` : (Optional) If relayer detected forking of your subnet, this is the URL where we will push alerting message to. You are required to set up slack bot and install it in the relevant channel first. For details, see slack doc: https://api.slack.com/messaging/webhooks \n
 Once you are done with the slack setup, find the slack webhook url and put it here. It shall look like `https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX`  We only need the ones after `https://hooks.slack.com/services/`
 
