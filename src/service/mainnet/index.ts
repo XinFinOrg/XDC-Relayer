@@ -57,11 +57,12 @@ export class MainnetClient {
     }
   }
     
-  async submitTxs(results: Array<{encodedRLP: string, blockNum: number}>): Promise<void> {
+  async submitTxs(results: Array<{hexRLP: string, blockNum: number}>): Promise<void> {
     try {
       if (!results.length) return;
-      const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex"));
-      const transactionToBeSent = await this.smartContractInstance.methods.receiveHeader(encodedHexArray);
+      //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
+      const hexArray = results.map(r => "0x" + r.hexRLP)
+      const transactionToBeSent = await this.smartContractInstance.methods.receiveHeader(hexArray);
       const gas = await transactionToBeSent.estimateGas({from: this.mainnetAccount.address});
       const options = {
         to: transactionToBeSent._parent._address,

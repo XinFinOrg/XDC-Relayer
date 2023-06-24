@@ -173,7 +173,7 @@ export class Worker {
     const blocksToFetchInChunks = chunkByMaxFetchSize(to - from);
     this.logger.info(`Start syncing with smart contract from block ${startingBlockNumberToFetch} to ${to}`);
     for await (const numOfBlocks of blocksToFetchInChunks) {
-      const results = await this.subnetService.bulkGetRlpEncodedHeaders(startingBlockNumberToFetch, numOfBlocks);
+      const results = await this.subnetService.bulkGetRlpHeaders(startingBlockNumberToFetch, numOfBlocks);
       await this.mainnetClient.submitTxs(results);
       startingBlockNumberToFetch+=numOfBlocks;
     }

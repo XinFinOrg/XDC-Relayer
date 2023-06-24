@@ -9,7 +9,7 @@ export interface SubnetBlockInfo {
   subnetBlockHash: string,
   subnetBlockNumber: number,
   subnetBlockRound: number,
-  encodedRLP: string,
+  hexRLP: string,
   parentHash: string
 }
 
@@ -29,36 +29,36 @@ export class SubnetService {
   
   async getLastCommittedBlockInfo() : Promise<SubnetBlockInfo> {
     try {
-      const { Hash, Number, Round, EncodedRLP, ParentHash }  = await this.web3.xdcSubnet.getV2Block("committed");
-      if (!Hash || !Number || !EncodedRLP || !ParentHash ) {
-        this.logger.error("Invalid block hash or height or encodedRlp or ParentHash received", Hash, Number, EncodedRLP, ParentHash);
+      const { Hash, Number, Round, HexRLP, ParentHash }  = await this.web3.xdcSubnet.getV2Block("committed");
+      if (!Hash || !Number || !HexRLP || !ParentHash ) {
+        this.logger.error("Invalid block hash or height or encodedRlp or ParentHash received", Hash, Number, HexRLP, ParentHash);
         throw new Error("Unable to get latest committed block information");
       }
       return {
         subnetBlockHash: Hash,
         subnetBlockNumber: Number,
         subnetBlockRound: Round,
-        encodedRLP: EncodedRLP,
+        hexRLP: HexRLP,
         parentHash: ParentHash
       };
     } catch (error) {
-      this.logger.error("Error while trying to fetch blockInfo by number from subnet", {message: error.message });
+      this.logger.error("Error getLastCommittedBlockInfo while trying to fetch blockInfo by number from subnet", {message: error.message });
       throw error;
     }
   }
   
   async getCommittedBlockInfoByNum(blockNum: number) : Promise<SubnetBlockInfo> {
     try {
-      const { Hash, Number, Round, EncodedRLP, ParentHash }  = await this.web3.xdcSubnet.getV2Block(`0x${(blockNum).toString(16)}`);
-      if (!Hash || !Number || !EncodedRLP || !ParentHash ) {
-        this.logger.error("Invalid block hash or height or encodedRlp or ParentHash received", Hash, Number, EncodedRLP, ParentHash);
+      const { Hash, Number, Round, HexRLP, ParentHash }  = await this.web3.xdcSubnet.getV2Block(`0x${(blockNum).toString(16)}`);
+      if (!Hash || !Number || !HexRLP || !ParentHash ) {
+        this.logger.error("Invalid block hash or height or encodedRlp or ParentHash received", Hash, Number, HexRLP, ParentHash);
         throw new Error("Unable to get committed block information by height");
       }
       return {
         subnetBlockHash: Hash,
         subnetBlockNumber: Number,
         subnetBlockRound: Round,
-        encodedRLP: EncodedRLP,
+        hexRLP: HexRLP,
         parentHash: ParentHash
       };
     } catch (error) {
@@ -69,16 +69,16 @@ export class SubnetService {
   
   async getComittedBlockInfoByHash(blockHash: string) : Promise<SubnetBlockInfo> {
     try {
-      const { Hash, Number, Round, EncodedRLP, ParentHash }  = await this.web3.xdcSubnet.getV2BlockByHash(blockHash);
-      if (!Hash || !Number || !EncodedRLP || !ParentHash ) {
-        this.logger.error("Invalid block hash or height or encodedRlp or ParentHash received", Hash, Number, EncodedRLP, ParentHash);
+      const { Hash, Number, Round, HexRLP, ParentHash }  = await this.web3.xdcSubnet.getV2BlockByHash(blockHash);
+      if (!Hash || !Number || !HexRLP || !ParentHash ) {
+        this.logger.error("Invalid block hash or height or encodedRlp or ParentHash received", Hash, Number, HexRLP, ParentHash);
         throw new Error("Unable to get committed block information by hash");
       }
       return {
         subnetBlockHash: Hash,
         subnetBlockNumber: Number,
         subnetBlockRound: Round,
-        encodedRLP: EncodedRLP,
+        hexRLP: HexRLP,
         parentHash: ParentHash
       };
     } catch (error) {
@@ -87,14 +87,14 @@ export class SubnetService {
     }
   }
   
-  async bulkGetRlpEncodedHeaders(startingBlockNumber: number, numberOfBlocksToFetch: number): Promise<Array<{encodedRLP: string, blockNum: number}>>{
-    const rlpEncodedHeaders: Array<{encodedRLP: string, blockNum: number}> = [];
+  async bulkGetRlpHeaders(startingBlockNumber: number, numberOfBlocksToFetch: number): Promise<Array<{hexRLP: string, blockNum: number}>>{
+    const rlpHeaders: Array<{hexRLP: string, blockNum: number}> = [];
     for (let i = startingBlockNumber; i < startingBlockNumber + numberOfBlocksToFetch; i++) {
-      const { encodedRLP } = await this.getCommittedBlockInfoByNum(i);
-      rlpEncodedHeaders.push({encodedRLP, blockNum: i});
+      const { hexRLP } = await this.getCommittedBlockInfoByNum(i);
+      rlpHeaders.push({hexRLP, blockNum: i});
       await sleep(this.subnetConfig.fetchWaitingTime);
     }
-    return rlpEncodedHeaders;
+    return rlpHeaders;
   }
 
 }
