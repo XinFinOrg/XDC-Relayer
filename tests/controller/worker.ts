@@ -26,7 +26,7 @@ test("Should bootstrap successfully for same block hash", async () => {
       subnetBlockHash: "0x123",
       subnetBlockNumber: 3,
       subnetBlockRound: 3,
-      encodedRLP: "0x123123123",
+      hexRLP: "0x123123123",
       parentHash: "0x000"
     })
   };
@@ -41,7 +41,7 @@ test("Should submit transactions normally for small gaps", async () => {
   
   const mockedResultsToSubmit = Array(6).map((_, index) => {
     return {
-      encodedRLP: "xxx",
+        hexRLP: "xxx",
       blockNum: index
     };
   });
@@ -59,7 +59,7 @@ test("Should submit transactions normally for small gaps", async () => {
       subnetBlockHash: "0x456",
       subnetBlockNumber: 10,
       subnetBlockRound: 10,
-      encodedRLP: "0x123123123",
+      hexRLP: "0x123123123",
       parentHash: "0x000"
     }),
     getCommittedBlockInfoByNum: jest.fn().mockResolvedValueOnce({
@@ -84,7 +84,7 @@ test("Should submit transactions normally for large gaps", async () => {
   const worker = new Worker(workerConfig, logger);
   const mockedResultsToSubmit = Array(10).map((_, index) => {
     return {
-      encodedRLP: "xxx",
+        hexRLP: "xxx",
       blockNum: index
     };
   });
@@ -104,7 +104,7 @@ test("Should submit transactions normally for large gaps", async () => {
       subnetBlockHash: "0x100",
       subnetBlockNumber: 100,
       subnetBlockRound: 99,
-      encodedRLP: "0x123123123",
+      hexRLP: "0x123123123",
       parentHash: "0x000"
     }),
     getCommittedBlockInfoByNum: jest.fn().mockResolvedValueOnce({
@@ -144,7 +144,7 @@ test("Should fail if same block height but different hash received", async () =>
       subnetBlockHash: "0x456",
       subnetBlockNumber: 3,
       subnetBlockRound: 4,
-      encodedRLP: "0x123123123",
+      hexRLP: "0x123123123",
       parentHash: "0x000"
     })
   };
@@ -170,7 +170,7 @@ test("Should fail if fetch same block height from subnet have different hash tha
       subnetBlockHash: "0x999",
       subnetBlockNumber: 9,
       subnetBlockRound: 10,
-      encodedRLP: "0x123123123",
+      hexRLP: "0x123123123",
       parentHash: "0x000"
     }),
     getCommittedBlockInfoByNum: jest.fn().mockResolvedValue({
@@ -200,7 +200,7 @@ test("Should pass successfully if mainnet SM is ahead of subnet and matches the 
       subnetBlockHash: "0x333",
       subnetBlockNumber: 3,
       subnetBlockRound: 4,
-      encodedRLP: "0x123123123",
+      hexRLP: "0x123123123",
       parentHash: "0x000"
     }),
     
@@ -215,11 +215,11 @@ test("Should start normal cron job", async () => {
   workerConfig.cronJob.jobExpression = "*/02 * * * * *";
   const worker = new Worker(workerConfig, logger);
   const mockedResultsToSubmit = [{
-    encodedRLP: "first",
+    hexRLP: "first",
     blockNum: 4
   }];
   const mockedSecontimeResultsToSubmit = [{
-    encodedRLP: "second",
+    hexRLP: "second",
     blockNum: 10
   }];
   const mockMainnetClient = {
@@ -236,13 +236,13 @@ test("Should start normal cron job", async () => {
       subnetBlockHash: "0x10",
       subnetBlockNumber: 10,
       subnetBlockRound: 10,
-      encodedRLP: "0x123123123",
+      hexRLP: "0x123123123",
       parentHash: "0x000"
     }).mockResolvedValueOnce({
       subnetBlockHash: "0x456",
       subnetBlockNumber: 11,
       subnetBlockRound: 12,
-      encodedRLP: "0x123123123123",
+      hexRLP: "0x123123123123",
       parentHash: "0x001"
     }),
     getCommittedBlockInfoByNum: jest.fn().mockResolvedValueOnce({
