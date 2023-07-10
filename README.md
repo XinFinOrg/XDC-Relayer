@@ -41,6 +41,12 @@ npm run test:coverage
 npm run test:watch
 ```
 
+- Running inside Docker container
+```
+  docker build -t relayer .
+  docker run --env-file .env --network host relayer
+```
+
 ## Environment variables
 Create a .env file (or just rename the .example.env) containing all the env variables you want to set, dotenv library will take care of setting them. This project is using three variables at the moment:
 
