@@ -11,7 +11,7 @@ import { Nofications } from "../service/notification";
 import bunyan from "bunyan";
 
 
-const MAX_FETCH_BLOCK_SIZE = 1;
+const MAX_FETCH_BLOCK_SIZE = 30;
 
 const chunkByMaxFetchSize = chunkBy(MAX_FETCH_BLOCK_SIZE);
 export class Worker {
