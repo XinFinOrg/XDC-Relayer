@@ -41,6 +41,7 @@ export class MainnetClient {
   async getLastAudittedBlock(): Promise<SmartContractData> {
     try {
       const result = await this.smartContractInstance.methods.getLatestBlocks().call();
+      console.log("result",result)
       const [latestBlockHash, latestBlockHeight] = result[0];
       const [latestSmComittedHash, latestSmHeight] = result[1];
       if (!latestBlockHash || !latestBlockHeight || !latestSmComittedHash || !latestSmHeight) {
