@@ -58,26 +58,33 @@ export class MainnetClient {
   }
     
   async submitTxs(results: Array<{hexRLP: string, blockNum: number}>): Promise<void> {
-    try {
+    // try {
       if (!results.length) return;
       //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
       const hexArray = results.map(r => "0x" + r.hexRLP)
+      this.logger.info('hexRLP', hexArray)
+      this.logger.info('debug error 1')
       const transactionToBeSent = await this.smartContractInstance.methods.receiveHeader(hexArray);
-      const gas = await transactionToBeSent.estimateGas({from: this.mainnetAccount.address});
+      this.logger.info('debug error 2')
+      // const gas = await transactionToBeSent.estimateGas({from: this.mainnetAccount.address});
+      this.logger.info('debug error 3')
       const options = {
         to: transactionToBeSent._parent._address,
         data: transactionToBeSent.encodeABI(),
-        gas,
+        // gas,
+        gas: 6000000,
         gasPrice: TRANSACTION_GAS_NUMBER
       };
+      this.logger.info('debug error 4')
       const signed = await this.web3.eth.accounts.signTransaction(options, this.mainnetAccount.privateKey);
+      this.logger.info('debug error 5')
       await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
       this.logger.info(`Successfully submitted the subnet block up to ${results[results.length-1].blockNum} as tx into mainnet`);
       await sleep(this.mainnetConfig.submitTransactionWaitingTime);
-    } catch (error) {
-      this.logger.error("Fail to submit transactions into mainnet", {message: error.message});
-      throw error;
-    }
+    // } catch (error) {
+    //   this.logger.error("Fail to submit transactions into mainnet", {message: error.message});
+    //   throw error;
+    // }
   }
   
   // Below shall be given height provide the SM hash
