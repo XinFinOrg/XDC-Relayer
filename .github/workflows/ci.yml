@@ -4,6 +4,9 @@ on:
   push:
     branches:    
       - master
+    tags:
+      - '*'
+
 
 jobs:
   test_build_and_push_to_docker_registry:
@@ -24,7 +27,17 @@ jobs:
         DOCKER_PASSWORD: ${{secrets.DOCKER_ACCESS_TOKEN}}
       run: |
         echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+    - name: Determine Docker Image Name
+      id: image
+      run: |
+        if [[ "${{github.ref_name}}" == "master" ]]; then
+          echo "name=xinfinorg/xdc-relayer:latest" >> $GITHUB_OUTPUT
+        else
+          echo "name=xinfinorg/xdc-relayer:${{github.ref_name}}" >> $GITHUB_OUTPUT
+        fi
+
     - name: Docker build and tag image
-      run: docker build . --file Dockerfile --tag xinfinorg/xdc-relayer:latest
+      run: docker build . --file Dockerfile --tag ${{ steps.image.outputs.name }}
     - name: Docker push
-      run: docker push xinfinorg/xdc-relayer:latest
+      run: docker push ${{ steps.image.outputs.name }}
