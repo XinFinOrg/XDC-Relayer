@@ -59,9 +59,15 @@ export class Worker {
   }
   
   async bootstrap(): Promise<boolean> {
+    this.logger.info('bootstrap start')
     try {
       // Clean timer
       this.cache.cleanCache();
+
+      //debug: list smartcontract validators
+      const checkValidators = await this.mainnetClient.getCurrentValidators();
+      // return false
+
       // Pull latest confirmed tx from mainnet
       const smartContractData = await this.mainnetClient.getLastAudittedBlock();
       // Pull latest confirm block from subnet

@@ -97,4 +97,15 @@ export class MainnetClient {
       throw error;
     }
   }
+
+  async getCurrentValidators(): Promise<string> {
+    try {
+      const result = await this.smartContractInstance.methods.getCurrentValidators().call();
+      this.logger.info("getCurrentValidators", result)
+      return result;
+    } catch (error) {
+      this.logger.error("getCurrentValidators error: ", error);
+      throw error;
+    }
+  }
 }
