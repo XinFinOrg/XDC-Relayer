@@ -87,6 +87,13 @@ export class MainnetClient {
   ): Promise<void> {
     try {
       if (!results.length) return;
+      this.logger.info(
+        `Submit the subnet block epoch ${
+          results[0].blockNum
+        } and commit block up to ${
+          results[results.length - 1].blockNum
+        } as tx into mainnet`
+      );
       //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
       const hexArray = results.map((r) => "0x" + r.hexRLP);
       const transactionToBeSent =
@@ -104,12 +111,9 @@ export class MainnetClient {
         options,
         this.mainnetAccount.privateKey
       );
+
       await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
-      this.logger.info(
-        `Successfully submitted the subnet block up to ${
-          results[results.length - 1].blockNum
-        } as tx into mainnet`
-      );
+
       await sleep(this.mainnetConfig.submitTransactionWaitingTime);
     } catch (error) {
       this.logger.error("Fail to submit transactions into mainnet", {
@@ -206,10 +210,16 @@ export class LiteMainnetClient {
   ): Promise<void> {
     try {
       if (!results.length) return;
+      this.logger.info(
+        `Submit the subnet block up to ${
+          results[results.length - 1].blockNum
+        } as tx into mainnet`
+      );
       //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
       const hexArray = results.map((r) => "0x" + r.hexRLP);
       const transactionToBeSent =
         await this.liteSmartContractInstance.methods.receiveHeader(hexArray);
+
       const gas = await transactionToBeSent.estimateGas({
         from: this.mainnetAccount.address,
       });
@@ -223,12 +233,9 @@ export class LiteMainnetClient {
         options,
         this.mainnetAccount.privateKey
       );
+
       await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
-      this.logger.info(
-        `Successfully submitted the subnet block up to ${
-          results[results.length - 1].blockNum
-        } as tx into mainnet`
-      );
+
       await sleep(this.mainnetConfig.submitTransactionWaitingTime);
     } catch (error) {
       this.logger.error("Fail to submit transactions into mainnet", {

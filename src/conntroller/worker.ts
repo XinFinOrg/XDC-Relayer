@@ -295,7 +295,9 @@ export class Worker {
     let scCommittedHeight = latestBlock.smartContractCommittedHeight;
 
     let conti = true;
-
+    this.logger.info(
+      `Start syncing with smart contract from block ${scHeight} to ${to}`
+    );
     while (conti) {
       //gap/epoch is not committed ,continue commit header to committed epochBlock
       if (scHeight != scCommittedHeight) {
@@ -335,7 +337,7 @@ export class Worker {
       scCommittedHeight = last.smartContractCommittedHeight;
       scHash = last.smartContractHash;
     }
-
+    this.logger.info("Sync completed!");
     return;
   }
 
