@@ -107,7 +107,6 @@ Let's dissect this project's `tsconfig.json`, starting with the `compilerOptions
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         }
-    },
 ```
 
 ## Running ESLint
