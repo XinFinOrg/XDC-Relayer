@@ -118,9 +118,16 @@ export class Worker {
       "Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet"
     );
     this.cron.stop();
-    while (!(await this.liteBootstrap())) {
-      await sleep(this.config.reBootstrapWaitingTime);
+    if (this.config.mode == "lite") {
+      while (!(await this.liteBootstrap())) {
+        await sleep(this.config.reBootstrapWaitingTime);
+      }
+    } else {
+      while (!(await this.bootstrap())) {
+        await sleep(this.config.reBootstrapWaitingTime);
+      }
     }
+
     return this.cron.start();
   }
 
@@ -269,8 +276,7 @@ export class Worker {
         latestBlock,
         lastestSubnetCommittedBlock.subnetBlockNumber
       );
-      const latestBlock2 = await this.liteMainnetClient.getLastAudittedBlock();
-      console.log(latestBlock2);
+
       return true;
     } catch (error) {
       this.postNotifications(error);
