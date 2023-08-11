@@ -130,7 +130,7 @@ export class Worker {
       );
 
       if (shouldProcess) {
-        await this.submitTxs(
+        await this.liteSubmitTxs(
           from,
           lastestSubnetCommittedBlock.subnetBlockNumber
         );
@@ -290,6 +290,10 @@ export class Worker {
       divergingHash: mainnetHash,
       divergingHeight: heightToSearchFrom,
     };
+  }
+
+  private async liteSubmitTxs(from: number, to: number): Promise<void> {
+    return;
   }
 
   // "from" is exclusive, we submit blocks "from + 1" till "to"
