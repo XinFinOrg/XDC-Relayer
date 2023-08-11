@@ -6,7 +6,7 @@ import { Account } from "web3-core";
 import bunyan from "bunyan";
 import { MainnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
-import { abi } from "./contract";
+import { ABI, liteABI } from "./contract";
 
 export interface SmartContractData {
   smartContractHash: string;
@@ -33,7 +33,7 @@ export class MainnetClient {
     });
     this.web3 = new Web3(provider);
     this.smartContractInstance = new this.web3.eth.Contract(
-      abi as AbiItem[],
+      ABI as AbiItem[],
       config.smartContractAddress
     );
     this.mainnetAccount = this.web3.eth.accounts.privateKeyToAccount(
@@ -152,7 +152,7 @@ export class LiteMainnetClient {
     });
     this.web3 = new Web3(provider);
     this.liteSmartContractInstance = new this.web3.eth.Contract(
-      abi as AbiItem[],
+      liteABI as AbiItem[],
       config.liteSmartContractAddress
     );
     this.mainnetAccount = this.web3.eth.accounts.privateKeyToAccount(

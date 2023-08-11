@@ -124,6 +124,8 @@ export class Worker {
       const lastestSubnetCommittedBlock =
         await this.subnetService.getLastCommittedBlockInfo();
 
+      console.log(smartContractData, lastestSubnetCommittedBlock);
+
       const { shouldProcess, from } = await this.shouldProcessSync(
         smartContractData,
         lastestSubnetCommittedBlock
@@ -154,7 +156,7 @@ export class Worker {
       "Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet"
     );
     this.cron.stop();
-    while (!(await this.bootstrap())) {
+    while (!(await this.liteBootstrap())) {
       await sleep(this.config.reBootstrapWaitingTime);
     }
     return this.cron.start();
