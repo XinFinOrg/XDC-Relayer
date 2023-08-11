@@ -265,7 +265,42 @@ export class LiteMainnetClient {
         .call();
       return { gap, epoch };
     } catch (error) {
-      this.logger.error("Fail to get block hash by number from mainnet", {
+      this.logger.error("Fail to getGapAndEpoch from mainnet", {
+        message: error.message,
+      });
+      throw error;
+    }
+  }
+
+  async commitHeader(epochHash: string, headers: Array<string>): Promise<void> {
+    try {
+      await this.liteSmartContractInstance.methods.commitHeader(
+        epochHash,
+        headers
+      );
+      await sleep(this.mainnetConfig.submitTransactionWaitingTime);
+    } catch (error) {
+      this.logger.error("Fail to commitHeader from mainnet", {
+        message: error.message,
+      });
+      throw error;
+    }
+  }
+
+  async getUnCommittedHeader(
+    epochHash: string
+  ): Promise<{ sequence: number; lastRoundNum: number; lastNum: number }> {
+    try {
+      const result = await this.liteSmartContractInstance.methods
+        .getUnCommittedHeader(epochHash)
+        .call();
+      return {
+        sequence: result[0],
+        lastRoundNum: result[1],
+        lastNum: result[2],
+      };
+    } catch (error) {
+      this.logger.error("Fail to commitHeader to mainnnet", {
         message: error.message,
       });
       throw error;

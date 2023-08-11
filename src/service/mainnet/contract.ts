@@ -391,6 +391,32 @@ export const liteABI = [
     type: "event",
   },
   {
+    inputs: [],
+    name: "INIT_EPOCH",
+    outputs: [
+      {
+        internalType: "uint64",
+        name: "",
+        type: "uint64",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "INIT_GAP",
+    outputs: [
+      {
+        internalType: "uint64",
+        name: "",
+        type: "uint64",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "bytes32",
@@ -424,6 +450,19 @@ export const liteABI = [
     name: "commitHeaderByNumber",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "epochNum",
+    outputs: [
+      {
+        internalType: "uint64",
+        name: "",
+        type: "uint64",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -599,42 +638,6 @@ export const liteABI = [
           },
         ],
         internalType: "struct LiteCheckpoint.BlockLite",
-        name: "",
-        type: "tuple",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "idx",
-        type: "uint256",
-      },
-    ],
-    name: "getNextEpochBlockByIndex",
-    outputs: [
-      {
-        components: [
-          {
-            internalType: "uint64",
-            name: "number",
-            type: "uint64",
-          },
-          {
-            internalType: "uint64",
-            name: "roundNum",
-            type: "uint64",
-          },
-          {
-            internalType: "int64",
-            name: "mainnetNum",
-            type: "int64",
-          },
-        ],
-        internalType: "struct LiteCheckpoint.HeaderInfo",
         name: "",
         type: "tuple",
       },

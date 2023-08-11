@@ -259,18 +259,18 @@ export class Worker {
   async liteBootstrap(): Promise<boolean> {
     try {
       // Pull latest confirmed tx from mainnet
-      const smartContractData =
-        await this.liteMainnetClient.getLastAudittedBlock();
+      const latestBlock = await this.liteMainnetClient.getLastAudittedBlock();
       // Pull latest confirm block from subnet
       const lastestSubnetCommittedBlock =
         await this.subnetService.getLastCommittedBlockInfo();
       const gapAndEpoch = await this.liteMainnetClient.getGapAndEpoch();
       await this.liteSubmitTxs(
         gapAndEpoch,
-        smartContractData,
+        latestBlock,
         lastestSubnetCommittedBlock.subnetBlockNumber
       );
-
+      const latestBlock2 = await this.liteMainnetClient.getLastAudittedBlock();
+      console.log(latestBlock2);
       return true;
     } catch (error) {
       this.postNotifications(error);
@@ -285,13 +285,56 @@ export class Worker {
 
   private async liteSubmitTxs(
     gapAndEpoch: { gap: number; epoch: number },
-    smartContractData: SmartContractData,
+    latestBlock: SmartContractData,
     to: number
   ): Promise<void> {
     const gap = gapAndEpoch.gap;
     const epoch = gapAndEpoch.epoch;
-    const scHeight = smartContractData.smartContractHash;
-    const scCommittedHeight = smartContractData.smartContractCommittedHeight;
+    let scHeight = latestBlock.smartContractHeight;
+    let scHash = latestBlock.smartContractHash;
+    let scCommittedHeight = latestBlock.smartContractCommittedHeight;
+
+    let conti = true;
+
+    while (conti) {
+      //gap/epoch is not committed ,continue commit header to committed epochBlock
+      if (scHeight != scCommittedHeight) {
+        const unCommittedHeader =
+          await this.liteMainnetClient.getUnCommittedHeader(scHash);
+        const startNum = unCommittedHeader.lastNum + 1;
+        const results = await this.subnetService.bulkGetRlpHeaders(
+          startNum,
+          Math.floor(MAX_FETCH_BLOCK_SIZE / 3) + 4
+        );
+        await this.liteMainnetClient.commitHeader(
+          scHash,
+          results.map((item) => {
+            return "0x" + item.hexRLP;
+          })
+        );
+      } else {
+        //find next epoch
+        if (scHeight % epoch == 0) {
+          scHeight += epoch - gap + 1;
+        } else {
+          scHeight = (Math.floor(scHeight / epoch) + 1) * epoch;
+        }
+        if (scHeight > to) {
+          conti = false;
+          break;
+        }
+        const results = await this.subnetService.bulkGetRlpHeaders(
+          scHeight,
+          Math.floor(MAX_FETCH_BLOCK_SIZE / 3) + 4
+        );
+
+        await this.liteMainnetClient.submitTxs(results);
+      }
+
+      const last = await this.liteMainnetClient.getLastAudittedBlock();
+      scCommittedHeight = last.smartContractCommittedHeight;
+      scHash = last.smartContractHash;
+    }
 
     return;
   }
