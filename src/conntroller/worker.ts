@@ -81,6 +81,30 @@ export class Worker {
       return false;
     }
   }
+
+  async liteBootstrap(): Promise<boolean> {
+    try {
+      // Clean timer
+      this.cache.cleanCache();
+      // Pull latest confirmed tx from mainnet
+      const smartContractData = await this.mainnetClient.getLastAudittedBlock();
+      // Pull latest confirm block from subnet
+      const lastestSubnetCommittedBlock = await this.subnetService.getLastCommittedBlockInfo();
+      
+      const { shouldProcess, from } = await this.shouldProcessSync(smartContractData, lastestSubnetCommittedBlock);
+      
+      if (shouldProcess) {
+        await this.submitTxs(from, lastestSubnetCommittedBlock.subnetBlockNumber);
+        // Store subnet block into cache
+        this.cache.setLastSubmittedSubnetHeader(lastestSubnetCommittedBlock);
+      }
+      return true;
+    } catch (error) {
+      this.postNotifications(error);
+      this.logger.error(`Error while bootstraping, system will go into sleep mode for ${this.config.reBootstrapWaitingTime/1000/60} minutes before re-processing!, message: ${error?.message}`);
+      return false;
+    }
+  }
   
   async synchronization(): Promise<void> {
     this.logger.info("Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet");
