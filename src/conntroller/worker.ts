@@ -113,44 +113,6 @@ export class Worker {
     }
   }
 
-  async liteBootstrap(): Promise<boolean> {
-    try {
-      // Clean timer
-      this.cache.cleanCache();
-      // Pull latest confirmed tx from mainnet
-      const smartContractData =
-        await this.liteMainnetClient.getLastAudittedBlock();
-      // Pull latest confirm block from subnet
-      const lastestSubnetCommittedBlock =
-        await this.subnetService.getLastCommittedBlockInfo();
-
-      console.log(smartContractData, lastestSubnetCommittedBlock);
-
-      const { shouldProcess, from } = await this.shouldProcessSync(
-        smartContractData,
-        lastestSubnetCommittedBlock
-      );
-
-      if (shouldProcess) {
-        await this.liteSubmitTxs(
-          from,
-          lastestSubnetCommittedBlock.subnetBlockNumber
-        );
-        // Store subnet block into cache
-        this.cache.setLastSubmittedSubnetHeader(lastestSubnetCommittedBlock);
-      }
-      return true;
-    } catch (error) {
-      this.postNotifications(error);
-      this.logger.error(
-        `Error while bootstraping, system will go into sleep mode for ${
-          this.config.reBootstrapWaitingTime / 1000 / 60
-        } minutes before re-processing!, message: ${error?.message}`
-      );
-      return false;
-    }
-  }
-
   async synchronization(): Promise<void> {
     this.logger.info(
       "Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet"
@@ -294,7 +256,43 @@ export class Worker {
     };
   }
 
-  private async liteSubmitTxs(from: number, to: number): Promise<void> {
+  async liteBootstrap(): Promise<boolean> {
+    try {
+      // Pull latest confirmed tx from mainnet
+      const smartContractData =
+        await this.liteMainnetClient.getLastAudittedBlock();
+      // Pull latest confirm block from subnet
+      const lastestSubnetCommittedBlock =
+        await this.subnetService.getLastCommittedBlockInfo();
+      const gapAndEpoch = await this.liteMainnetClient.getGapAndEpoch();
+      await this.liteSubmitTxs(
+        gapAndEpoch,
+        smartContractData,
+        lastestSubnetCommittedBlock.subnetBlockNumber
+      );
+
+      return true;
+    } catch (error) {
+      this.postNotifications(error);
+      this.logger.error(
+        `Error while bootstraping, system will go into sleep mode for ${
+          this.config.reBootstrapWaitingTime / 1000 / 60
+        } minutes before re-processing!, message: ${error?.message}`
+      );
+      return false;
+    }
+  }
+
+  private async liteSubmitTxs(
+    gapAndEpoch: { gap: number; epoch: number },
+    smartContractData: SmartContractData,
+    to: number
+  ): Promise<void> {
+    const gap = gapAndEpoch.gap;
+    const epoch = gapAndEpoch.epoch;
+    const scHeight = smartContractData.smartContractHash;
+    const scCommittedHeight = smartContractData.smartContractCommittedHeight;
+
     return;
   }
 

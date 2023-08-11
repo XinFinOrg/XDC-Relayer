@@ -253,4 +253,22 @@ export class LiteMainnetClient {
       throw error;
     }
   }
+
+  async getGapAndEpoch(): Promise<{ gap: number; epoch: number }> {
+    try {
+      const gap = await this.liteSmartContractInstance.methods
+        .INIT_GAP()
+        .call();
+
+      const epoch = await this.liteSmartContractInstance.methods
+        .INIT_EPOCH()
+        .call();
+      return { gap, epoch };
+    } catch (error) {
+      this.logger.error("Fail to get block hash by number from mainnet", {
+        message: error.message,
+      });
+      throw error;
+    }
+  }
 }
