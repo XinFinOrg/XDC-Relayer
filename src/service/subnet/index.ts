@@ -131,7 +131,7 @@ export class SubnetService {
       "Fetch subnet node data from " +
         startingBlockNumber +
         " to " +
-        (startingBlockNumber + numberOfBlocksToFetch)
+        (startingBlockNumber + numberOfBlocksToFetch - 1)
     );
     const rlpHeaders: Array<{ hexRLP: string; blockNum: number }> = [];
     for (
