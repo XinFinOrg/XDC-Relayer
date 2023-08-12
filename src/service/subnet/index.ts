@@ -84,7 +84,7 @@ export class SubnetService {
     } catch (error) {
       this.logger.error(
         "Error while trying to fetch blockInfo by number from subnet blockNum:",
-        { blockNum },
+        blockNum,
         { message: error.message }
       );
       throw error;
@@ -127,13 +127,18 @@ export class SubnetService {
     startingBlockNumber: number,
     numberOfBlocksToFetch: number
   ): Promise<Array<{ hexRLP: string; blockNum: number }>> {
+    this.logger.info(
+      "Fetch subnet node data from " +
+        startingBlockNumber +
+        " to " +
+        (startingBlockNumber + numberOfBlocksToFetch)
+    );
     const rlpHeaders: Array<{ hexRLP: string; blockNum: number }> = [];
     for (
       let i = startingBlockNumber;
       i < startingBlockNumber + numberOfBlocksToFetch;
       i++
     ) {
-   
       const { hexRLP } = await this.getCommittedBlockInfoByNum(i);
       rlpHeaders.push({ hexRLP, blockNum: i });
       await sleep(this.subnetConfig.fetchWaitingTime);

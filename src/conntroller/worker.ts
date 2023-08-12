@@ -303,23 +303,31 @@ export class Worker {
     let scHash = latestBlock.smartContractHash;
     let scCommittedHeight = latestBlock.smartContractCommittedHeight;
 
-    let conti = true;
+    let continueScan = true;
     this.logger.info(
       `Start syncing with smart contract from block ${scHeight} to ${to}`
     );
-    while (conti) {
-      //gap/epoch is not committed ,continue commit header to committed epochBlock
+
+    console.log(latestBlock);
+    while (continueScan) {
       if (scHeight != scCommittedHeight) {
+        this.logger.info(
+          `gap/epoch number ${scHeight} is not committed ,continue commit headers`
+        );
         const unCommittedHeader =
           await this.liteMainnetClient.getUnCommittedHeader(scHash);
-        const lastNum = unCommittedHeader.lastNum;
-   
-        const startNum = lastNum + 1;
 
-        const results = await this.subnetService.bulkGetRlpHeaders(
-          startNum,
-          4
-        );
+        const lastNum = unCommittedHeader.lastNum;
+        if (lastNum == 0) {
+          this.logger.error(
+            `LastNum is 0 .there are some wrong in gap/epoch number ${scHeight} `
+          );
+          break;
+        }
+
+        const startNum = Number(lastNum) + 1;
+
+        const results = await this.subnetService.bulkGetRlpHeaders(startNum, 4);
         await this.liteMainnetClient.commitHeader(
           scHash,
           results.map((item) => {
@@ -333,15 +341,16 @@ export class Worker {
         } else {
           scHeight = (Math.floor(scHeight / epoch) + 1) * epoch;
         }
+        this.logger.info(`Next epoch block number : ${scHeight}`);
         if (scHeight > to) {
-          conti = false;
+          this.logger.info(
+            `Next epoch block number ${scHeight} greater than to : ${to} stop sync , wait subnet node block grow up`
+          );
+          continueScan = false;
           break;
         }
 
-        const results = await this.subnetService.bulkGetRlpHeaders(
-          scHeight,
-          4
-        );
+        const results = await this.subnetService.bulkGetRlpHeaders(scHeight, 4);
 
         await this.liteMainnetClient.submitTxs(results);
       }

@@ -215,7 +215,7 @@ export class LiteMainnetClient {
           results[results.length - 1].blockNum
         } as tx into mainnet`
       );
-    
+
       //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
       const hexArray = results.map((r) => "0x" + r.hexRLP);
       const transactionToBeSent =
@@ -282,10 +282,27 @@ export class LiteMainnetClient {
 
   async commitHeader(epochHash: string, headers: Array<string>): Promise<void> {
     try {
-      await this.liteSmartContractInstance.methods.commitHeader(
-        epochHash,
-        headers
+      const transactionToBeSent =
+        await this.liteSmartContractInstance.methods.commitHeader(
+          epochHash,
+          headers
+        );
+      const gas = await transactionToBeSent.estimateGas({
+        from: this.mainnetAccount.address,
+      });
+      const options = {
+        to: transactionToBeSent._parent._address,
+        data: transactionToBeSent.encodeABI(),
+        gas,
+        gasPrice: TRANSACTION_GAS_NUMBER,
+      };
+      const signed = await this.web3.eth.accounts.signTransaction(
+        options,
+        this.mainnetAccount.privateKey
       );
+
+      await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+
       await sleep(this.mainnetConfig.submitTransactionWaitingTime);
     } catch (error) {
       this.logger.error("Fail to commitHeader from mainnet", {
