@@ -24,6 +24,7 @@ export interface Config {
   port: number;
   devMode: boolean;
   cronJob: {
+    liteJobExpression: string;
     jobExpression: string;
   };
   subnet: SubnetConfig;
@@ -40,6 +41,7 @@ const config: Config = {
   port: +(process.env.PORT || 3000),
   devMode: devMode,
   cronJob: {
+    liteJobExpression: "* */2 * * * *", // every 2min
     jobExpression: "*/20 * * * * *", // every 20s
   },
   subnet: {

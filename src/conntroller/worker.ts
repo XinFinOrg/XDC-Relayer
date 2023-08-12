@@ -37,7 +37,7 @@ export class Worker {
       logger,
       config.devMode
     );
-    this.liteCron = new CronJob(config.cronJob.jobExpression, async () => {
+    this.liteCron = new CronJob(config.cronJob.liteJobExpression, async () => {
       try {
         logger.info("⏰ Executing normal flow periodically");
         await this.liteBootstrap();
