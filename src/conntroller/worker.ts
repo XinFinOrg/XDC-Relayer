@@ -15,6 +15,7 @@ const MAX_FETCH_BLOCK_SIZE = 30;
 const chunkByMaxFetchSize = chunkBy(MAX_FETCH_BLOCK_SIZE);
 export class Worker {
   cron: CronJob;
+  liteCron: CronJob;
   mainnetClient: MainnetClient;
   liteMainnetClient: LiteMainnetClient;
   subnetService: SubnetService;
@@ -36,6 +37,18 @@ export class Worker {
       logger,
       config.devMode
     );
+    this.liteCron = new CronJob(config.cronJob.jobExpression, async () => {
+      try {
+        logger.info("⏰ Executing normal flow periodically");
+        await this.liteBootstrap();
+      } catch (error) {
+        logger.error("Fail to run cron job normally", {
+          message: error.message,
+        });
+        this.postNotifications(error);
+        this.synchronization();
+      }
+    });
     this.cron = new CronJob(config.cronJob.jobExpression, async () => {
       try {
         logger.info("⏰ Executing normal flow periodically");
@@ -120,9 +133,11 @@ export class Worker {
     this.logger.info(`Current mode ${this.config.mode}`);
 
     if (this.config.mode == "lite") {
+      this.liteCron.stop();
       while (!(await this.liteBootstrap())) {
         await sleep(this.config.reBootstrapWaitingTime);
       }
+      this.liteCron.start();
     } else {
       this.cron.stop();
       while (!(await this.bootstrap())) {
