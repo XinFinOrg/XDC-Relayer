@@ -307,9 +307,10 @@ export class Worker {
       `Start syncing with smart contract from block ${scHeight} to ${to}`
     );
 
-    console.log(latestBlock);
     while (continueScan) {
-      console.log(scHeight, scCommittedHeight);
+      this.logger.info(
+        `Current epoch number ${scHeight} committed epoch number ${scCommittedHeight}`
+      );
       if (scHeight != scCommittedHeight) {
         this.logger.info(
           `gap/epoch number ${scHeight} is not committed ,continue commit headers`
