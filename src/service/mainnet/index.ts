@@ -88,9 +88,7 @@ export class MainnetClient {
     try {
       if (!results.length) return;
       this.logger.info(
-        `Submit the subnet block epoch ${
-          results[0].blockNum
-        } and commit block up to ${
+        `Submit the subnet block up to ${
           results[results.length - 1].blockNum
         } as tx into mainnet`
       );
@@ -211,10 +209,13 @@ export class LiteMainnetClient {
     try {
       if (!results.length) return;
       this.logger.info(
-        `Submit the subnet block up to ${
+        `Submit the subnet block epoch ${
+          results[0].blockNum
+        } and commit block up to ${
           results[results.length - 1].blockNum
         } as tx into mainnet`
       );
+    
       //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
       const hexArray = results.map((r) => "0x" + r.hexRLP);
       const transactionToBeSent =

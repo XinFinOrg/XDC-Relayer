@@ -303,7 +303,6 @@ export class Worker {
     let scHash = latestBlock.smartContractHash;
     let scCommittedHeight = latestBlock.smartContractCommittedHeight;
 
-    console.log(scHeight, scCommittedHeight);
     let conti = true;
     this.logger.info(
       `Start syncing with smart contract from block ${scHeight} to ${to}`
@@ -313,13 +312,13 @@ export class Worker {
       if (scHeight != scCommittedHeight) {
         const unCommittedHeader =
           await this.liteMainnetClient.getUnCommittedHeader(scHash);
-        console.log(unCommittedHeader);
-        const startNum = unCommittedHeader.lastNum + 1;
+        const lastNum = unCommittedHeader.lastNum;
+   
+        const startNum = lastNum + 1;
 
-        console.log("startNum", startNum);
         const results = await this.subnetService.bulkGetRlpHeaders(
           startNum,
-          Math.floor(MAX_FETCH_BLOCK_SIZE / 3) + 4
+          4
         );
         await this.liteMainnetClient.commitHeader(
           scHash,
@@ -339,10 +338,9 @@ export class Worker {
           break;
         }
 
-        console.log("scHeight", scHeight);
         const results = await this.subnetService.bulkGetRlpHeaders(
           scHeight,
-          Math.floor(MAX_FETCH_BLOCK_SIZE / 3) + 4
+          4
         );
 
         await this.liteMainnetClient.submitTxs(results);
