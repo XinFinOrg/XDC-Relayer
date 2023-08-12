@@ -118,6 +118,8 @@ export class Worker {
       "Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet"
     );
     this.cron.stop();
+
+    this.logger.info(`Current mode ${this.config.mode}`);
     if (this.config.mode == "lite") {
       while (!(await this.liteBootstrap())) {
         await sleep(this.config.reBootstrapWaitingTime);
@@ -270,6 +272,7 @@ export class Worker {
       // Pull latest confirm block from subnet
       const lastestSubnetCommittedBlock =
         await this.subnetService.getLastCommittedBlockInfo();
+
       const gapAndEpoch = await this.liteMainnetClient.getGapAndEpoch();
       await this.liteSubmitTxs(
         gapAndEpoch,
@@ -300,6 +303,7 @@ export class Worker {
     let scHash = latestBlock.smartContractHash;
     let scCommittedHeight = latestBlock.smartContractCommittedHeight;
 
+    console.log(scHeight, scCommittedHeight);
     let conti = true;
     this.logger.info(
       `Start syncing with smart contract from block ${scHeight} to ${to}`
@@ -309,7 +313,10 @@ export class Worker {
       if (scHeight != scCommittedHeight) {
         const unCommittedHeader =
           await this.liteMainnetClient.getUnCommittedHeader(scHash);
+        console.log(unCommittedHeader);
         const startNum = unCommittedHeader.lastNum + 1;
+
+        console.log("startNum", startNum);
         const results = await this.subnetService.bulkGetRlpHeaders(
           startNum,
           Math.floor(MAX_FETCH_BLOCK_SIZE / 3) + 4
@@ -331,6 +338,8 @@ export class Worker {
           conti = false;
           break;
         }
+
+        console.log("scHeight", scHeight);
         const results = await this.subnetService.bulkGetRlpHeaders(
           scHeight,
           Math.floor(MAX_FETCH_BLOCK_SIZE / 3) + 4
