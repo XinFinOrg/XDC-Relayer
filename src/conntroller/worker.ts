@@ -117,20 +117,19 @@ export class Worker {
     this.logger.info(
       "Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet"
     );
-    this.cron.stop();
-
     this.logger.info(`Current mode ${this.config.mode}`);
+
     if (this.config.mode == "lite") {
       while (!(await this.liteBootstrap())) {
         await sleep(this.config.reBootstrapWaitingTime);
       }
     } else {
+      this.cron.stop();
       while (!(await this.bootstrap())) {
         await sleep(this.config.reBootstrapWaitingTime);
       }
+      return this.cron.start();
     }
-
-    return this.cron.start();
   }
 
   // This method does all the necessary verifications before submit blocks as transactions into mainnet XDC
@@ -310,6 +309,7 @@ export class Worker {
 
     console.log(latestBlock);
     while (continueScan) {
+      console.log(scHeight, scCommittedHeight);
       if (scHeight != scCommittedHeight) {
         this.logger.info(
           `gap/epoch number ${scHeight} is not committed ,continue commit headers`
@@ -341,10 +341,10 @@ export class Worker {
         } else {
           scHeight = (Math.floor(scHeight / epoch) + 1) * epoch;
         }
-        this.logger.info(`Next epoch block number : ${scHeight}`);
+        this.logger.info(`Next epoch block number ${scHeight}`);
         if (scHeight > to) {
           this.logger.info(
-            `Next epoch block number ${scHeight} greater than to : ${to} stop sync , wait subnet node block grow up`
+            `Next epoch block number ${scHeight} greater than to ${to} stop sync , wait subnet node block grow up`
           );
           continueScan = false;
           break;
