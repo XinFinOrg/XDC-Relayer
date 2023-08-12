@@ -360,7 +360,7 @@ export class Worker {
         this.logger.info(`Next epoch block number ${scHeight}`);
         if (scHeight > to) {
           this.logger.info(
-            `Next epoch block number ${scHeight} greater than to ${to} stop sync , wait subnet node block grow up`
+            `Next epoch block number ${scHeight} greater than subnet node latest block number ${to} ,so stop sync , wait subnet node block grow up`
           );
           continueScan = false;
           break;
