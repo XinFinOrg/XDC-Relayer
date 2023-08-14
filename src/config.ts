@@ -9,7 +9,6 @@ export interface SubnetConfig {
 export interface MainnetConfig {
   url: string;
   smartContractAddress: string;
-  liteSmartContractAddress: string;
   accountPK: string;
   submitTransactionWaitingTime: number;
 }
@@ -31,7 +30,6 @@ export interface Config {
   mainnet: MainnetConfig;
   reBootstrapWaitingTime: number;
   notification: NotificationConfig;
-  mode: string;
 }
 
 const environment = process.env.NODE_ENV || "production";
@@ -53,7 +51,6 @@ const config: Config = {
       process.env.PARENTCHAIN_URL ||
       "https://devnetstats.apothem.network/mainnet",
     smartContractAddress: process.env.CHECKPOINT_CONTRACT || "",
-    liteSmartContractAddress: process.env.LITE_CHECKPOINT_CONTRACT || "",
     accountPK:
       process.env.PARENTCHAIN_WALLET_PK ||
       "0xa6538b992365dd26bbc2391ae6639bac0ed8599f8b45bca7c28c105959f02af4", // Default to a dummy key
@@ -67,7 +64,6 @@ const config: Config = {
         }
       : undefined,
   },
-  mode: process.env.MODE || "",
 };
 
 export { config };

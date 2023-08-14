@@ -130,9 +130,10 @@ export class Worker {
     this.logger.info(
       "Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet"
     );
-    this.logger.info(`Current mode ${this.config.mode}`);
 
-    if (this.config.mode == "lite") {
+    const mode = await this.mainnetClient.Mode();
+    this.logger.info(`Current smart contract mode ${mode}`);
+    if (mode == "lite") {
       this.liteCron.stop();
       while (!(await this.liteBootstrap())) {
         await sleep(this.config.reBootstrapWaitingTime);

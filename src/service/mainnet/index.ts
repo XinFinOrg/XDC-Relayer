@@ -6,7 +6,8 @@ import { Account } from "web3-core";
 import bunyan from "bunyan";
 import { MainnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
-import { ABI, liteABI } from "./contract";
+import FullABI from "./ABI/FullABI.json";
+import LiteABI from "./ABI/LiteABI.json";
 
 export interface SmartContractData {
   smartContractHash: string;
@@ -33,7 +34,7 @@ export class MainnetClient {
     });
     this.web3 = new Web3(provider);
     this.smartContractInstance = new this.web3.eth.Contract(
-      ABI as AbiItem[],
+      FullABI as AbiItem[],
       config.smartContractAddress
     );
     this.mainnetAccount = this.web3.eth.accounts.privateKeyToAccount(
@@ -136,6 +137,16 @@ export class MainnetClient {
       throw error;
     }
   }
+
+  async Mode(): Promise<string> {
+    try {
+      const result = await this.smartContractInstance.methods.MODE().call();
+      return result;
+    } catch (error) {
+      this.logger.error("Fail to get mode from mainnet");
+      throw error;
+    }
+  }
 }
 
 export class LiteMainnetClient {
@@ -154,8 +165,8 @@ export class LiteMainnetClient {
     });
     this.web3 = new Web3(provider);
     this.liteSmartContractInstance = new this.web3.eth.Contract(
-      liteABI as AbiItem[],
-      config.liteSmartContractAddress
+      LiteABI as AbiItem[],
+      config.smartContractAddress
     );
     this.mainnetAccount = this.web3.eth.accounts.privateKeyToAccount(
       config.accountPK
@@ -328,6 +339,16 @@ export class LiteMainnetClient {
       this.logger.error("Fail to commitHeader to mainnnet", {
         message: error.message,
       });
+      throw error;
+    }
+  }
+
+  async Mode(): Promise<string> {
+    try {
+      const result = await this.liteSmartContractInstance.methods.MODE().call();
+      return result;
+    } catch (error) {
+      this.logger.error("Fail to get mode from mainnet");
       throw error;
     }
   }
