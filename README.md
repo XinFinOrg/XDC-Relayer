@@ -17,7 +17,7 @@ The new file name shall be `.env`
 
 - Run the project directly in TS (dev mode)
 ```
-npm run start:dev
+npm run start:dev | bunyan -l debug
 ```
 
 - Build and run the project in JS

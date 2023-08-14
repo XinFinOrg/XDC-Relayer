@@ -65,7 +65,9 @@ export class Worker {
       this.cache.cleanCache();
 
       //debug: list smartcontract validators
+      this.logger.info('debug before validator')
       const checkValidators = await this.mainnetClient.getCurrentValidators();
+      this.logger.info('debug after validator')
       // return false
 
       // Pull latest confirmed tx from mainnet
