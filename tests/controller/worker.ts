@@ -11,7 +11,7 @@ beforeEach(() => {
 });
 
 describe("Full sync test", () => {
-  it("Should bootstrap successfully for same block hash", async () => {
+  it("should bootstrap successfully for same block hash", async () => {
     const worker = new Worker(workerConfig, logger);
 
     const mockMainnetClient = {
@@ -37,7 +37,7 @@ describe("Full sync test", () => {
     expect(success).toBe(true);
   });
 
-  it("Should submit transactions normally for small gaps", async () => {
+  it("should submit transactions normally for small gaps", async () => {
     const worker = new Worker(workerConfig, logger);
 
     const mockedResultsToSubmit = Array(6).map((_, index) => {
@@ -86,7 +86,7 @@ describe("Full sync test", () => {
     expect(mockSubnetClient.bulkGetRlpHeaders).toBeCalledWith(7, 4);
   });
 
-  it("Should submit transactions normally for large gaps", async () => {
+  it("should submit transactions normally for large gaps", async () => {
     const worker = new Worker(workerConfig, logger);
     const mockedResultsToSubmit = Array(10).map((_, index) => {
       return {
@@ -149,7 +149,7 @@ describe("Full sync test", () => {
     expect(mockSubnetClient.bulkGetRlpHeaders).toHaveBeenLastCalledWith(97, 4);
   });
 
-  it("Should fail if same block height but different hash received", async () => {
+  it("should fail if same block height but different hash received", async () => {
     const worker = new Worker(workerConfig, logger);
     const mockMainnetClient = {
       getLastAudittedBlock: jest.fn().mockResolvedValue({
@@ -174,7 +174,7 @@ describe("Full sync test", () => {
     expect(success).toBe(false);
   });
 
-  it("Should fail if fetch same block height from subnet have different hash than mainnent", async () => {
+  it("should fail if fetch same block height from subnet have different hash than mainnent", async () => {
     const worker = new Worker(workerConfig, logger);
     const mockMainnetClient = {
       getLastAudittedBlock: jest.fn().mockResolvedValue({
@@ -203,7 +203,7 @@ describe("Full sync test", () => {
     expect(success).toBe(false);
   });
 
-  it("Should pass successfully if mainnet SM is ahead of subnet and matches the hashes", async () => {
+  it("should pass successfully if mainnet SM is ahead of subnet and matches the hashes", async () => {
     const worker = new Worker(workerConfig, logger);
     const mockMainnetClient = {
       getLastAudittedBlock: jest.fn().mockResolvedValue({
@@ -229,7 +229,7 @@ describe("Full sync test", () => {
     expect(success).toBe(true);
   });
 
-  it("Should start normal cron job", async () => {
+  it("should start normal cron job", async () => {
     workerConfig.cronJob.jobExpression = "*/02 * * * * *";
     const worker = new Worker(workerConfig, logger);
     const mockedResultsToSubmit = [
@@ -314,7 +314,7 @@ describe("Full sync test", () => {
 });
 
 describe("Lite sync test", () => {
-  it("Should test lite mode normal sync", async () => {
+  it("should normal sync", async () => {
     const worker = new Worker(workerConfig, logger);
     const mockedResultsToSubmit = Array(4).map((_, index) => {
       return {
@@ -360,7 +360,7 @@ describe("Lite sync test", () => {
     expect(success).toBe(true);
   });
 
-  it("Should test lite mode continue normal sync", async () => {
+  it("should continue normal sync", async () => {
     const worker = new Worker(workerConfig, logger);
     const mockedResultsToSubmit = Array(4).map((_, index) => {
       return {
@@ -426,7 +426,7 @@ describe("Lite sync test", () => {
     expect(success).toBe(true);
   });
 
-  it("Should test lite mode sync with continue commit", async () => {
+  it("should sync with continue commit", async () => {
     const worker = new Worker(workerConfig, logger);
     const mockedResultsToSubmit = Array(4).map((_, index) => {
       return {
