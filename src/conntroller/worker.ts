@@ -317,6 +317,7 @@ export class Worker {
     let scHeight = latestBlock.smartContractHeight;
     let scHash = latestBlock.smartContractHash;
     let scCommittedHeight = latestBlock.smartContractCommittedHeight;
+    const scCommittedHash = latestBlock.smartContractCommittedHash;
 
     let continueScan = true;
     this.logger.info(
@@ -335,11 +336,12 @@ export class Worker {
           await this.liteMainnetClient.getUnCommittedHeader(scHash);
 
         const lastNum = unCommittedHeader.lastNum;
-        if (lastNum == 0) {
+        const sequence = unCommittedHeader.sequence;
+        if (sequence >= 3 || lastNum == 0) {
           this.logger.error(
-            `LastNum is 0 .there are some wrong in gap/epoch number ${scHeight} `
+            `sequence >=3 or lastNum is 0 there are some wrong in gap/epoch number ${scHeight} `
           );
-          break;
+          throw new ForkingError(scHeight, scHash, scCommittedHash);
         }
 
         const startNum = Number(lastNum) + 1;
