@@ -1,33 +1,32 @@
-export const abi = [
+[
   {
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "initial_validator_set",
+        "name": "initialValidatorSet",
         "type": "address[]"
       },
       {
         "internalType": "bytes",
-        "name": "genesis_header",
+        "name": "genesisHeader",
         "type": "bytes"
       },
       {
         "internalType": "bytes",
-        "name": "block1_header",
+        "name": "block1Header",
         "type": "bytes"
       },
       {
         "internalType": "uint64",
-        "name": "gap",
+        "name": "initGap",
         "type": "uint64"
       },
       {
         "internalType": "uint64",
-        "name": "epoch",
+        "name": "initEpoch",
         "type": "uint64"
       }
     ],
-    "payable": false,
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
@@ -37,7 +36,7 @@ export const abi = [
       {
         "indexed": false,
         "internalType": "bytes32",
-        "name": "block_hash",
+        "name": "blockHash",
         "type": "bytes32"
       },
       {
@@ -56,7 +55,7 @@ export const abi = [
       {
         "indexed": false,
         "internalType": "bytes32",
-        "name": "block_hash",
+        "name": "blockHash",
         "type": "bytes32"
       },
       {
@@ -70,77 +69,74 @@ export const abi = [
     "type": "event"
   },
   {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "master",
-        "type": "address"
-      }
-    ],
-    "name": "isMaster",
+    "inputs": [],
+    "name": "INIT_EPOCH",
     "outputs": [
       {
-        "internalType": "bool",
+        "internalType": "uint64",
         "name": "",
-        "type": "bool"
+        "type": "uint64"
       }
     ],
-    "payable": false,
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
+    "inputs": [],
+    "name": "INIT_GAP",
+    "outputs": [
       {
-        "internalType": "address",
-        "name": "master",
-        "type": "address"
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
       }
     ],
-    "name": "addMaster",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
+    "inputs": [],
+    "name": "MODE",
+    "outputs": [
       {
-        "internalType": "address",
-        "name": "master",
-        "type": "address"
+        "internalType": "string",
+        "name": "",
+        "type": "string"
       }
     ],
-    "name": "removeMaster",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
+    "inputs": [],
+    "name": "getCurrentValidators",
+    "outputs": [
       {
-        "internalType": "bytes[]",
-        "name": "headers",
-        "type": "bytes[]"
+        "components": [
+          {
+            "internalType": "address[]",
+            "name": "set",
+            "type": "address[]"
+          },
+          {
+            "internalType": "int256",
+            "name": "threshold",
+            "type": "int256"
+          }
+        ],
+        "internalType": "struct FullCheckpoint.Validators",
+        "name": "",
+        "type": "tuple"
       }
     ],
-    "name": "receiveHeader",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
-    "constant": true,
     "inputs": [
       {
         "internalType": "bytes32",
-        "name": "header_hash",
+        "name": "blockHash",
         "type": "bytes32"
       }
     ],
@@ -150,7 +146,7 @@ export const abi = [
         "components": [
           {
             "internalType": "bytes32",
-            "name": "parent_hash",
+            "name": "parentHash",
             "type": "bytes32"
           },
           {
@@ -160,12 +156,12 @@ export const abi = [
           },
           {
             "internalType": "uint64",
-            "name": "round_num",
+            "name": "roundNum",
             "type": "uint64"
           },
           {
             "internalType": "int256",
-            "name": "mainnet_num",
+            "name": "mainnetNum",
             "type": "int256"
           },
           {
@@ -174,17 +170,15 @@ export const abi = [
             "type": "bool"
           }
         ],
-        "internalType": "struct Subnet.HeaderInfo",
+        "internalType": "struct FullCheckpoint.HeaderInfo",
         "name": "",
         "type": "tuple"
       }
     ],
-    "payable": false,
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "constant": true,
     "inputs": [
       {
         "internalType": "int256",
@@ -207,59 +201,15 @@ export const abi = [
             "type": "int256"
           }
         ],
-        "internalType": "struct Subnet.BlockLite",
+        "internalType": "struct FullCheckpoint.BlockLite",
         "name": "",
         "type": "tuple"
       }
     ],
-    "payable": false,
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "header_hash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getHeaderConfirmationStatus",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "header_hash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getMainnetBlockNumber",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
     "inputs": [],
     "name": "getLatestBlocks",
     "outputs": [
@@ -276,7 +226,7 @@ export const abi = [
             "type": "int256"
           }
         ],
-        "internalType": "struct Subnet.BlockLite",
+        "internalType": "struct FullCheckpoint.BlockLite",
         "name": "",
         "type": "tuple"
       },
@@ -293,40 +243,25 @@ export const abi = [
             "type": "int256"
           }
         ],
-        "internalType": "struct Subnet.BlockLite",
+        "internalType": "struct FullCheckpoint.BlockLite",
         "name": "",
         "type": "tuple"
       }
     ],
-    "payable": false,
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [],
-    "name": "getCurrentValidators",
-    "outputs": [
+    "inputs": [
       {
-        "components": [
-          {
-            "internalType": "address[]",
-            "name": "set",
-            "type": "address[]"
-          },
-          {
-            "internalType": "int256",
-            "name": "threshold",
-            "type": "int256"
-          }
-        ],
-        "internalType": "struct Subnet.Validators",
-        "name": "",
-        "type": "tuple"
+        "internalType": "bytes[]",
+        "name": "headers",
+        "type": "bytes[]"
       }
     ],
-    "payable": false,
-    "stateMutability": "view",
+    "name": "receiveHeader",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
-];
+]
