@@ -62,17 +62,17 @@ export class MainnetClient {
       if (!results.length) return;
       //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
       const hexArray = results.map(r => "0x" + r.hexRLP)
-      this.logger.info('hexRLP', hexArray)
+      // this.logger.info('hexRLP', hexArray)
       this.logger.info('debug error 1')
       const transactionToBeSent = await this.smartContractInstance.methods.receiveHeader(hexArray);
       this.logger.info('debug error 2')
-      // const gas = await transactionToBeSent.estimateGas({from: this.mainnetAccount.address});
+      const gas = await transactionToBeSent.estimateGas({from: this.mainnetAccount.address});
       this.logger.info('debug error 3')
       const options = {
         to: transactionToBeSent._parent._address,
         data: transactionToBeSent.encodeABI(),
-        // gas,
-        gas: 6000000,
+        gas,
+        // gas: 6000000,
         gasPrice: TRANSACTION_GAS_NUMBER
       };
       this.logger.info('debug error 4')
@@ -101,7 +101,7 @@ export class MainnetClient {
   async getCurrentValidators(): Promise<string> {
     try {
       const result = await this.smartContractInstance.methods.getCurrentValidators().call();
-      this.logger.info("getCurrentValidators", result)
+      // this.logger.info("getCurrentValidators", result)
       return result;
     } catch (error) {
       this.logger.error("getCurrentValidators error: ", error);
