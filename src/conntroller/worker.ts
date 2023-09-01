@@ -3,16 +3,14 @@ import { SmartContractData } from "./../service/mainnet/index";
 import { CronJob } from "cron";
 import { SubnetBlockInfo, SubnetService } from "../service/subnet";
 import { MainnetClient, LiteMainnetClient } from "../service/mainnet";
-import { Config } from "../config";
+import { config, Config } from "../config";
 import { chunkBy, sleep } from "../utils";
 import { Cache } from "../service/cache";
 import { ForkingError } from "./../errors/forkingError";
 import { Nofications } from "../service/notification";
 import bunyan from "bunyan";
 
-const MAX_FETCH_BLOCK_SIZE = 30;
-
-const chunkByMaxFetchSize = chunkBy(MAX_FETCH_BLOCK_SIZE);
+const chunkByMaxFetchSize = chunkBy(config.chunkSize);
 export class Worker {
   cron: CronJob;
   liteCron: CronJob;
