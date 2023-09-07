@@ -30,6 +30,7 @@ export interface Config {
   mainnet: MainnetConfig;
   reBootstrapWaitingTime: number;
   notification: NotificationConfig;
+  chunkSize: number;
 }
 
 const environment = process.env.NODE_ENV || "production";
@@ -64,6 +65,7 @@ const config: Config = {
         }
       : undefined,
   },
+  chunkSize : parseInt(process.env.MAX_FETCH_BLOCK_SIZE) || 30,
 };
 
 export { config };
