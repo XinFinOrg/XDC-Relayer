@@ -135,7 +135,6 @@ export class Worker {
     this.logger.info(`Current smart contract mode ${mode}`);
     if (mode == "lite") {
       this.liteCron.stop();
-
       while (!(await this.liteBootstrap())) {
         await sleep(this.config.reBootstrapWaitingTime);
       }
