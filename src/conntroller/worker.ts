@@ -38,7 +38,9 @@ export class Worker {
     this.liteCron = new CronJob(config.cronJob.liteJobExpression, async () => {
       try {
         logger.info("⏰ Executing normal flow periodically");
-        await this.liteBootstrap();
+        if (!(await this.liteBootstrap())) {
+          throw Error("fail start retry");
+        }
       } catch (error) {
         logger.error("Fail to run cron job normally", {
           message: error.message,
