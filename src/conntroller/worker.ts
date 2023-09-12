@@ -38,7 +38,9 @@ export class Worker {
     this.liteCron = new CronJob(config.cronJob.liteJobExpression, async () => {
       try {
         logger.info("⏰ Executing normal flow periodically");
-        await this.liteBootstrap();
+        if (!(await this.liteBootstrap())) {
+          throw Error("fail start retry");
+        }
       } catch (error) {
         logger.error("Fail to run cron job normally", {
           message: error.message,
@@ -133,22 +135,15 @@ export class Worker {
     this.logger.info(`Current smart contract mode ${mode}`);
     if (mode == "lite") {
       this.liteCron.stop();
-      let pass = false;
-      while (!pass) {
-        pass = await this.liteBootstrap();
-        if (!pass) {
-          await sleep(this.config.reBootstrapWaitingTime);
-        }
+
+      while (!(await this.liteBootstrap())) {
+        await sleep(this.config.reBootstrapWaitingTime);
       }
       this.liteCron.start();
     } else {
       this.cron.stop();
-      let pass = false;
-      while (!pass) {
-        pass = await this.bootstrap();
-        if (!pass) {
-          await sleep(this.config.reBootstrapWaitingTime);
-        }
+      while (!(await this.bootstrap())) {
+        await sleep(this.config.reBootstrapWaitingTime);
       }
       return this.cron.start();
     }
