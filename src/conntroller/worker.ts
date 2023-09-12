@@ -133,14 +133,22 @@ export class Worker {
     this.logger.info(`Current smart contract mode ${mode}`);
     if (mode == "lite") {
       this.liteCron.stop();
-      while (!(await this.liteBootstrap())) {
-        await sleep(this.config.reBootstrapWaitingTime);
+      let pass = false;
+      while (!pass) {
+        pass = await this.liteBootstrap();
+        if (!pass) {
+          await sleep(this.config.reBootstrapWaitingTime);
+        }
       }
       this.liteCron.start();
     } else {
       this.cron.stop();
-      while (!(await this.bootstrap())) {
-        await sleep(this.config.reBootstrapWaitingTime);
+      let pass = false;
+      while (!pass) {
+        pass = await this.bootstrap();
+        if (!pass) {
+          await sleep(this.config.reBootstrapWaitingTime);
+        }
       }
       return this.cron.start();
     }
