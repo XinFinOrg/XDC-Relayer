@@ -3,7 +3,7 @@ name: Build and Push via Master
 on:
   push:
     branches:    
-      - master
+      - develop
     tags:
       - '*'
 
