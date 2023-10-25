@@ -16,7 +16,7 @@ export interface SmartContractData {
   smartContractCommittedHash: string;
 }
 
-const TRANSACTION_GAS_NUMBER = 12500000000
+const TRANSACTION_GAS_NUMBER = 12500000000;
 
 export class MainnetClient {
   private web3: Web3;
