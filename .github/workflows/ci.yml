@@ -1,12 +1,10 @@
-name: Build and Push via Master
-
+name: Build and publish image 
 on:
   push:
     branches:    
       - master
     tags:
       - '*'
-
 
 jobs:
   test_build_and_push_to_docker_registry:
