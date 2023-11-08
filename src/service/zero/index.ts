@@ -19,6 +19,10 @@ export const getBlock = async () => {
   console.log("viem:" + blockNumber);
 };
 
-export const getPayload = async () => {
+export const validateTransactionProof = async () => {
+  return;
+};
+
+export const sync = async () => {
   return;
 };
