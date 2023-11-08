@@ -9,6 +9,7 @@ import { Cache } from "../service/cache";
 import { ForkingError } from "./../errors/forkingError";
 import { Nofications } from "../service/notification";
 import bunyan from "bunyan";
+import zero from "../service/zero";
 
 const chunkByMaxFetchSize = chunkBy(config.chunkSize);
 export class Worker {
@@ -127,6 +128,7 @@ export class Worker {
   }
 
   async synchronization(): Promise<void> {
+    
     this.logger.info(
       "Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet"
     );
