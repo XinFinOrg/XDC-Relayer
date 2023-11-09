@@ -9,8 +9,29 @@ import endpointABI from "../../abi/endpointABI.json";
 
 // const account = privateKeyToAccount(`0x${process.env.PRIVATE_KEY}`);
 
-const endpoint = "0xD4449Bf3f8E6a1b3fb5224F4e1Ec4288BD765547";
+const subnetEndpointContract = {
+  address: "0xD4449Bf3f8E6a1b3fb5224F4e1Ec4288BD765547",
+  abi: endpointABI,
+};
 
+const devnetEndpointContract = {
+  address: "0xD4449Bf3f8E6a1b3fb5224F4e1Ec4288BD765547",
+  abi: endpointABI,
+};
+const xdcdevnet = {
+  id: 551,
+  name: "XDC Devnet",
+  network: "XDC Devnet",
+  nativeCurrency: {
+    decimals: 18,
+    name: "XDC",
+    symbol: "XDC",
+  },
+  rpcUrls: {
+    public: { http: ["https://devnetstats.apothem.network/devnet"] },
+    default: { http: ["https://devnetstats.apothem.network/devnet"] },
+  },
+};
 const xdcsubnet = {
   id: 4865,
   name: "XDC Subnet",
@@ -31,13 +52,18 @@ const xdcsubnet = {
 //   chain: xdcsubnet,
 //   transport: http(),
 // });
-export const publicClient = createPublicClient({
+export const subnetPublicClient = createPublicClient({
   chain: xdcsubnet,
   transport: http(),
 });
 
+export const devnetPublicClient = createPublicClient({
+  chain: xdcdevnet,
+  transport: http(),
+});
+
 export const getBlock = async () => {
-  const blockNumber = await publicClient.getBlockNumber();
+  const blockNumber = await subnetPublicClient.getBlockNumber();
   console.log("viem:" + blockNumber);
 };
 
@@ -45,10 +71,17 @@ export const validateTransactionProof = async () => {
   return;
 };
 
+export const getChainIdFromParentnet = async () => {
+  const reads = devnetPublicClient.multicall({
+    contracts: [
+      { ...(devnetEndpointContract as any), functionName: "totalSupply" },
+    ],
+  });
+};
+
 export const sync = async () => {
-  const logs = await publicClient.getContractEvents({
-    address: endpoint as any,
-    abi: endpointABI as any,
+  const logs = await subnetPublicClient.getContractEvents({
+    ...(subnetEndpointContract as any),
     fromBlock: BigInt(0),
     eventName: "Packet",
   });
