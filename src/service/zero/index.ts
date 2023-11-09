@@ -8,14 +8,14 @@ import { privateKeyToAccount } from "viem/accounts";
 import endpointABI from "../../abi/endpointABI.json";
 import fetch from "node-fetch";
 
-// const account = privateKeyToAccount(`0x${process.env.PRIVATE_KEY}`);
+const account = privateKeyToAccount(`0x${process.env.ZERO_WALLET_PK}`);
 
 const subnetEndpointContract = {
   address: "0xD4449Bf3f8E6a1b3fb5224F4e1Ec4288BD765547",
   abi: endpointABI,
 };
 
-const devnetEndpointContract = {
+const parentnetEndpointContract = {
   address: "0xc77f4F74FE5E0416A8e35285332f189954928834",
   abi: endpointABI,
 };
@@ -48,17 +48,17 @@ const xdcsubnet = {
   },
 };
 
-// const walletClient = createWalletClient({
-//   account,
-//   chain: xdcsubnet,
-//   transport: http(),
-// });
+const parentnetWalletClient = createWalletClient({
+  account,
+  chain: xdcsubnet,
+  transport: http(),
+});
 export const subnetPublicClient = createPublicClient({
   chain: xdcsubnet,
   transport: http(),
 });
 
-export const devnetPublicClient = createPublicClient({
+export const parentnetPublicClient = createPublicClient({
   chain: xdcparentnet,
   transport: http(),
 });
@@ -75,13 +75,18 @@ export const validateTransactionProof = async (
   transactionProof: string[],
   blockhash: string
 ) => {
-    
-  return;
+  const { request } = await parentnetPublicClient.simulateContract({
+    ...(parentnetEndpointContract as any),
+    account,
+    functionName: "validateTransactionProof",
+    args: [cid, key, receiptProof, transactionProof, blockhash],
+  });
+  await parentnetWalletClient.writeContract(request as any);
 };
 
 export const getIndexFromParentnet = async (): Promise<any> => {
-  const index = await devnetPublicClient.readContract({
-    ...(devnetEndpointContract as any),
+  const index = await parentnetPublicClient.readContract({
+    ...(parentnetEndpointContract as any),
     functionName: "getChainIndex",
     args: [xdcsubnet.id],
   });
