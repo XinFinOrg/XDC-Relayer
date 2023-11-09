@@ -6,6 +6,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import endpointABI from "../../abi/endpointABI.json";
+import fetch from "node-fetch";
 
 // const account = privateKeyToAccount(`0x${process.env.PRIVATE_KEY}`);
 
@@ -80,6 +81,20 @@ export const getIndexFromParentnet = async (): Promise<any> => {
   return index;
 };
 
+export const getProof = async (txhash: string): Promise<any> => {
+  const res = await fetch("https://devnetstats.apothem.network/subnet", {
+    method: "POST",
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "eth_getTransactionAndReceiptProof",
+      params: [txhash],
+    }),
+    headers: { "Content-Type": "application/json" },
+  });
+  return res.json();
+};
+
 export const getPayloads = async () => {
   const payloads = [] as any;
   const logs = await subnetPublicClient.getContractEvents({
@@ -100,8 +115,11 @@ export const getPayloads = async () => {
       ],
       `0x${log.data.substring(130)}`
     );
+
     if (Number(values[3]) == xdcdevnet.id) {
-      payloads.push(values);
+      const list = [...values];
+      list.push(log.transactionHash);
+      payloads.push(list);
     }
   });
 
@@ -118,9 +136,9 @@ export const sync = async () => {
   const lastIndexfromParentnet = await getIndexFromParentnet();
 
   if (lastIndexFromSubnet > lastIndexfromParentnet) {
-    console.log(payloads);
-    console.log("syncing...");
+    for (let i = lastIndexfromParentnet; i <= lastIndexFromSubnet; i++) {
+      const proof = await getProof(payloads[i][6]);
+      console.log(proof);
+    }
   }
-
-  return;
 };
