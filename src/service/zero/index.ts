@@ -19,7 +19,7 @@ const devnetEndpointContract = {
   address: "0xc77f4F74FE5E0416A8e35285332f189954928834",
   abi: endpointABI,
 };
-const xdcdevnet = {
+const xdcparentnet = {
   id: 551,
   name: "XDC Devnet",
   network: "XDC Devnet",
@@ -59,7 +59,7 @@ export const subnetPublicClient = createPublicClient({
 });
 
 export const devnetPublicClient = createPublicClient({
-  chain: xdcdevnet,
+  chain: xdcparentnet,
   transport: http(),
 });
 
@@ -68,7 +68,14 @@ export const getBlock = async () => {
   console.log("viem:" + blockNumber);
 };
 
-export const validateTransactionProof = async () => {
+export const validateTransactionProof = async (
+  cid: string,
+  key: string,
+  receiptProof: string[],
+  transactionProof: string[],
+  blockhash: string
+) => {
+    
   return;
 };
 
@@ -116,7 +123,7 @@ export const getPayloads = async () => {
       `0x${log.data.substring(130)}`
     );
 
-    if (Number(values[3]) == xdcdevnet.id) {
+    if (Number(values[3]) == xdcparentnet.id) {
       const list = [...values];
       list.push(log.transactionHash);
       payloads.push(list);
@@ -139,6 +146,13 @@ export const sync = async () => {
     for (let i = lastIndexfromParentnet; i <= lastIndexFromSubnet; i++) {
       const proof = await getProof(payloads[i][6]);
       console.log(proof);
+      await validateTransactionProof(
+        xdcparentnet.id.toString(),
+        proof.key,
+        proof.receiptProofValues,
+        proof.transactionProofValues,
+        proof.blockHash
+      );
     }
   }
 };
