@@ -100,7 +100,9 @@ export const getPayloads = async () => {
       ],
       `0x${log.data.substring(130)}`
     );
-    payloads.push(values);
+    if (Number(values[3]) == xdcdevnet.id) {
+      payloads.push(values);
+    }
   });
 
   return payloads;
