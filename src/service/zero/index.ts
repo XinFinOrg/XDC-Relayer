@@ -107,11 +107,18 @@ export const getPayloads = async () => {
 };
 
 export const sync = async () => {
-  const index = await getIndexFromParentnet();
-  console.log(index);
   const payloads = await getPayloads();
+  if (payloads.length == 0) return;
 
-  console.log(payloads);
+  const lastPayload = payloads[payloads.length - 1];
+  const lastIndexFromSubnet = lastPayload[0];
+
+  const lastIndexfromParentnet = await getIndexFromParentnet();
+
+  if (lastIndexFromSubnet > lastIndexfromParentnet) {
+    console.log(payloads);
+    console.log("syncing...");
+  }
 
   return;
 };
