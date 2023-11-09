@@ -15,7 +15,7 @@ const subnetEndpointContract = {
 };
 
 const devnetEndpointContract = {
-  address: "0xD4449Bf3f8E6a1b3fb5224F4e1Ec4288BD765547",
+  address: "0xc77f4F74FE5E0416A8e35285332f189954928834",
   abi: endpointABI,
 };
 const xdcdevnet = {
@@ -71,15 +71,17 @@ export const validateTransactionProof = async () => {
   return;
 };
 
-export const getChainIdFromParentnet = async () => {
-  const reads = devnetPublicClient.multicall({
-    contracts: [
-      { ...(devnetEndpointContract as any), functionName: "totalSupply" },
-    ],
+export const getIndexFromParentnet = async (): Promise<any> => {
+  const index = await devnetPublicClient.readContract({
+    ...(devnetEndpointContract as any),
+    functionName: "getChainIndex",
+    args: [xdcsubnet.id],
   });
+  return index;
 };
 
-export const sync = async () => {
+export const getPayloads = async () => {
+  const payloads = [] as any;
   const logs = await subnetPublicClient.getContractEvents({
     ...(subnetEndpointContract as any),
     fromBlock: BigInt(0),
@@ -98,8 +100,18 @@ export const sync = async () => {
       ],
       `0x${log.data.substring(130)}`
     );
-    console.log(values);
+    payloads.push(values);
   });
+
+  return payloads;
+};
+
+export const sync = async () => {
+  const index = await getIndexFromParentnet();
+  console.log(index);
+  const payloads = await getPayloads();
+
+  console.log(payloads);
 
   return;
 };
