@@ -16,7 +16,7 @@ const subnetEndpointContract = {
 };
 
 const parentnetEndpointContract = {
-  address: "0xc77f4F74FE5E0416A8e35285332f189954928834",
+  address: "0x6edf5Cf866eD8b0C40B4e9eb363DDc1d5EFf30C8",
   abi: endpointABI,
 };
 const xdcparentnet = {
@@ -105,7 +105,8 @@ export const getProof = async (txhash: string): Promise<any> => {
     }),
     headers: { "Content-Type": "application/json" },
   });
-  return res.json();
+  const json = await res.json();
+  return json?.result;
 };
 
 export const getPayloads = async () => {
@@ -156,10 +157,10 @@ export const sync = async () => {
       const proof = await getProof(payloads[i][6]);
       console.log(proof);
       await validateTransactionProof(
-        xdcparentnet.id.toString(),
+        xdcsubnet.id.toString(),
         proof.key,
         proof.receiptProofValues,
-        proof.transactionProofValues,
+        proof.txProofValues,
         proof.blockHash
       );
     }
