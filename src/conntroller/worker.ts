@@ -127,8 +127,11 @@ export class Worker {
     }
   }
 
-  async synchronization(): Promise<void> {
+  async syncZero(): Promise<void> {
     await sync();
+  }
+
+  async synchronization(): Promise<void> {
     this.logger.info(
       "Start the synchronization to audit the subnet block by submit smart contract transaction onto XDC's mainnet"
     );
