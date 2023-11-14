@@ -11,7 +11,7 @@ import fetch from "node-fetch";
 const account = privateKeyToAccount(`0x${process.env.ZERO_WALLET_PK}`);
 
 const subnetEndpointContract = {
-  address: "0xD4449Bf3f8E6a1b3fb5224F4e1Ec4288BD765547",
+  address: "0x36757BaA2F0b767Ea4DCFb434F46ACD020046f47",
   abi: endpointABI,
 };
 
@@ -34,7 +34,7 @@ const xdcparentnet = {
   },
 };
 const xdcsubnet = {
-  id: 4865,
+  id: 12755,
   name: "XDC Subnet",
   network: "XDC Subnet",
   nativeCurrency: {
@@ -81,7 +81,8 @@ export const validateTransactionProof = async (
     functionName: "validateTransactionProof",
     args: [cid, key, receiptProof, transactionProof, blockhash],
   });
-  await parentnetWalletClient.writeContract(request as any);
+  const tx = await parentnetWalletClient.writeContract(request as any);
+  console.log(tx);
 };
 
 export const getIndexFromParentnet = async (): Promise<any> => {
@@ -139,6 +140,7 @@ export const getPayloads = async () => {
 };
 
 export const sync = async () => {
+  console.log("start");
   const payloads = await getPayloads();
   if (payloads.length == 0) return;
 
@@ -146,6 +148,8 @@ export const sync = async () => {
   const lastIndexFromSubnet = lastPayload[0];
 
   const lastIndexfromParentnet = await getIndexFromParentnet();
+
+  console.log(lastIndexfromParentnet, lastIndexFromSubnet);
 
   if (lastIndexFromSubnet > lastIndexfromParentnet) {
     for (let i = lastIndexfromParentnet; i <= lastIndexFromSubnet; i++) {
