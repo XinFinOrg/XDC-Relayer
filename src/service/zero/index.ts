@@ -7,6 +7,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import endpointABI from "../../abi/endpointABI.json";
 import fetch from "node-fetch";
+import { sleep } from "src/utils";
 
 const account = privateKeyToAccount(`0x${process.env.ZERO_WALLET_PK}`);
 
@@ -86,13 +87,13 @@ export const validateTransactionProof = async (
 };
 
 export const getIndexFromParentnet = async (): Promise<any> => {
-    const chain = await parentnetPublicClient.readContract({
-        ...(parentnetEndpointContract as any),
-        functionName: "getChain",
-        args: [xdcsubnet.id],
-    }) as {lastIndex: number};
+  const chain = (await parentnetPublicClient.readContract({
+    ...(parentnetEndpointContract as any),
+    functionName: "getChain",
+    args: [xdcsubnet.id],
+  })) as { lastIndex: number };
 
-    return chain?.lastIndex;
+  return chain?.lastIndex;
 };
 
 export const getProof = async (txhash: string): Promise<any> => {
@@ -142,28 +143,30 @@ export const getPayloads = async () => {
 };
 
 export const sync = async () => {
-  console.log("start");
-  const payloads = await getPayloads();
-  if (payloads.length == 0) return;
+  while (true) {
+    const payloads = await getPayloads();
+    if (payloads.length == 0) return;
 
-  const lastPayload = payloads[payloads.length - 1];
-  const lastIndexFromSubnet = lastPayload[0];
+    const lastPayload = payloads[payloads.length - 1];
+    const lastIndexFromSubnet = lastPayload[0];
 
-  const lastIndexfromParentnet = await getIndexFromParentnet();
+    const lastIndexfromParentnet = await getIndexFromParentnet();
 
-  console.log(lastIndexfromParentnet, lastIndexFromSubnet);
+    //it's better to fetch data from csc on parentnet , to get the latest subnet header data
 
-  if (lastIndexFromSubnet > lastIndexfromParentnet) {
-    for (let i = lastIndexfromParentnet; i <= lastIndexFromSubnet; i++) {
-      const proof = await getProof(payloads[i][6]);
-      console.log(proof);
-      await validateTransactionProof(
-        xdcsubnet.id.toString(),
-        proof.key,
-        proof.receiptProofValues,
-        proof.txProofValues,
-        proof.blockHash
-      );
+    if (lastIndexFromSubnet > lastIndexfromParentnet) {
+      for (let i = lastIndexfromParentnet; i <= lastIndexFromSubnet; i++) {
+        const proof = await getProof(payloads[i][6]);
+        console.log(proof);
+        await validateTransactionProof(
+          xdcsubnet.id.toString(),
+          proof.key,
+          proof.receiptProofValues,
+          proof.txProofValues,
+          proof.blockHash
+        );
+      }
     }
+    sleep(10000);
   }
 };
