@@ -86,12 +86,13 @@ export const validateTransactionProof = async (
 };
 
 export const getIndexFromParentnet = async (): Promise<any> => {
-  const index = await parentnetPublicClient.readContract({
-    ...(parentnetEndpointContract as any),
-    functionName: "getChainIndex",
-    args: [xdcsubnet.id],
-  });
-  return index;
+    const chain = await parentnetPublicClient.readContract({
+        ...(parentnetEndpointContract as any),
+        functionName: "getChain",
+        args: [xdcsubnet.id],
+    }) as {lastIndex: number};
+
+    return chain?.lastIndex;
 };
 
 export const getProof = async (txhash: string): Promise<any> => {
