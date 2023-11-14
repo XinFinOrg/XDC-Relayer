@@ -50,7 +50,7 @@ const xdcsubnet = {
 
 const parentnetWalletClient = createWalletClient({
   account,
-  chain: xdcsubnet,
+  chain: xdcparentnet,
   transport: http(),
 });
 export const subnetPublicClient = createPublicClient({
