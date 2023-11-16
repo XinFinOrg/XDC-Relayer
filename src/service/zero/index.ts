@@ -135,6 +135,7 @@ export const getPayloads = async () => {
     if (Number(values[3]) == xdcparentnet.id) {
       const list = [...values];
       list.push(log.transactionHash);
+      list.push(log.blockNumber);
       payloads.push(list);
     }
   });
@@ -153,7 +154,10 @@ export const sync = async () => {
 
     const lastIndexfromParentnet = await getIndexFromParentnet();
 
+    const lastBlockNumber = lastPayload[7];
+
     //it's better to fetch data from csc on parentnet , to get the latest subnet header data
+    
 
     if (lastIndexFromSubnet > lastIndexfromParentnet) {
       for (let i = lastIndexfromParentnet; i <= lastIndexFromSubnet; i++) {
