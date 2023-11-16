@@ -38,8 +38,8 @@ const xdcparentnet = {
     symbol: "XDC",
   },
   rpcUrls: {
-    public: { http: ["https://devnetstats.apothem.network/devnet"] },
-    default: { http: ["https://devnetstats.apothem.network/devnet"] },
+    public: { http: [process.env.PARENTCHAIN_URL] },
+    default: { http: [process.env.PARENTCHAIN_URL] },
   },
 };
 const xdcsubnet = {
@@ -52,8 +52,8 @@ const xdcsubnet = {
     symbol: "XDC",
   },
   rpcUrls: {
-    public: { http: ["https://devnetstats.apothem.network/subnet"] },
-    default: { http: ["https://devnetstats.apothem.network/subnet"] },
+    public: { http: [process.env.SUBNET_URL] },
+    default: { http: [process.env.SUBNET_URL] },
   },
 };
 
