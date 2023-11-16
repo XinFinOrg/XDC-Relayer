@@ -6,10 +6,18 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import endpointABI from "../../abi/endpointABI.json";
+import cscABI from "../../abi/cscABI.json";
 import fetch from "node-fetch";
 import { sleep } from "../../utils";
 
 const account = privateKeyToAccount(`0x${process.env.ZERO_WALLET_PK}`);
+
+const csc = process.env.CHECKPOINT_CONTRACT;
+
+const parentnetCSCContract = {
+  address: csc,
+  abi: cscABI,
+};
 
 const subnetEndpointContract = {
   address: "0x36757BaA2F0b767Ea4DCFb434F46ACD020046f47",
@@ -86,6 +94,16 @@ export const validateTransactionProof = async (
   console.log(tx);
 };
 
+export const getLatestBlockNumberFromCsc = async () => {
+  const blocks = (await parentnetPublicClient.readContract({
+    ...(parentnetCSCContract as any),
+    functionName: "getLatestBlocks",
+    args: [],
+  })) as [any, any];
+
+  return blocks[1]?.number;
+};
+
 export const getIndexFromParentnet = async (): Promise<any> => {
   const chain = (await parentnetPublicClient.readContract({
     ...(parentnetEndpointContract as any),
@@ -156,8 +174,20 @@ export const sync = async () => {
 
     const lastBlockNumber = lastPayload[7];
 
+    const cscBlockNumber = await getLatestBlockNumberFromCsc();
+
+    if (cscBlockNumber < lastBlockNumber) {
+      console.log(
+        "wait for csc block lastBlockNumber:" +
+          lastBlockNumber +
+          " cscBlockNumber:" +
+          cscBlockNumber
+      );
+      await sleep(1000);
+      continue;
+    }
+
     //it's better to fetch data from csc on parentnet , to get the latest subnet header data
-    
 
     if (lastIndexFromSubnet > lastIndexfromParentnet) {
       for (let i = lastIndexfromParentnet; i <= lastIndexFromSubnet; i++) {
@@ -173,6 +203,6 @@ export const sync = async () => {
       }
     }
     console.log("end sync zero ,sleep 10 seconds");
-    await sleep(10000);
+    await sleep(1000);
   }
 };
