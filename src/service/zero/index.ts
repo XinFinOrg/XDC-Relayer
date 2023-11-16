@@ -20,12 +20,12 @@ const parentnetCSCContract = {
 };
 
 const subnetEndpointContract = {
-  address: "0x36757BaA2F0b767Ea4DCFb434F46ACD020046f47",
+  address: process.env.SUBNET_ZERO_CONTRACT,
   abi: endpointABI,
 };
 
 const parentnetEndpointContract = {
-  address: "0x6edf5Cf866eD8b0C40B4e9eb363DDc1d5EFf30C8",
+  address: process.env.PARENTNET_ZERO_CONTRACT,
   abi: endpointABI,
 };
 const xdcparentnet = {
