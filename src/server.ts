@@ -17,10 +17,10 @@ const worker = new Worker(config, logger);
 // Enable bodyParser with default options
 app.use(bodyParser());
 
-app.listen(config.port, async () => {
-  logger.info(`Server csc relayer running on port ${config.port}`);
-  await worker.synchronization();
-});
+// app.listen(config.port, async () => {
+//   logger.info(`Server csc relayer running on port ${config.port}`);
+//   await worker.synchronization();
+// });
 
 app.listen(config.port + 1, async () => {
   logger.info(`Server zero relayer running on port ${config.port + 1}`);

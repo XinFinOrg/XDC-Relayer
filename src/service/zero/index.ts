@@ -7,7 +7,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import endpointABI from "../../abi/endpointABI.json";
 import fetch from "node-fetch";
-import { sleep } from "src/utils";
+import { sleep } from "../../utils";
 
 const account = privateKeyToAccount(`0x${process.env.ZERO_WALLET_PK}`);
 
@@ -144,6 +144,7 @@ export const getPayloads = async () => {
 
 export const sync = async () => {
   while (true) {
+    console.log("start sync zero");
     const payloads = await getPayloads();
     if (payloads.length == 0) return;
 
@@ -157,7 +158,6 @@ export const sync = async () => {
     if (lastIndexFromSubnet > lastIndexfromParentnet) {
       for (let i = lastIndexfromParentnet; i <= lastIndexFromSubnet; i++) {
         const proof = await getProof(payloads[i][6]);
-        console.log(proof);
         await validateTransactionProof(
           xdcsubnet.id.toString(),
           proof.key,
@@ -165,8 +165,10 @@ export const sync = async () => {
           proof.txProofValues,
           proof.blockHash
         );
+        console.log("sync zero index " + i + " success");
       }
     }
-    sleep(10000);
+    console.log("end sync zero ,sleep 10 seconds");
+    await sleep(10000);
   }
 };
