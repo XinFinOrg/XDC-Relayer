@@ -73,7 +73,7 @@ const getChainId = async (url: string) => {
     headers: { "Content-Type": "application/json" },
   });
   const json = await res.json();
-  return json?.result;
+  return Number(json?.result);
 };
 
 const createParentnetWalletClient = async () => {
@@ -113,6 +113,7 @@ export const validateTransactionProof = async (
     functionName: "validateTransactionProof",
     args: [cid, key, receiptProof, transactionProof, blockhash],
   });
+
   const tx = await parentnetWalletClient.writeContract(request as any);
   console.info(tx);
 };
@@ -216,17 +217,20 @@ export const sync = async () => {
 
     //it's better to fetch data from csc on parentnet , to get the latest subnet header data
     const subnet = await xdcsubnet();
+
     if (lastIndexFromSubnet > lastIndexfromParentnet) {
-      for (let i = lastIndexfromParentnet; i <= lastIndexFromSubnet; i++) {
-        const proof = await getProof(payloads[i][6]);
-        await validateTransactionProof(
-          subnet.id.toString(),
-          proof.key,
-          proof.receiptProofValues,
-          proof.txProofValues,
-          proof.blockHash
-        );
-        console.info("sync zero index " + i + " success");
+      for (let i = lastIndexfromParentnet; i < lastIndexFromSubnet; i++) {
+        if (payloads?.[i]?.[6]) {
+          const proof = await getProof(payloads[i][6]);
+          await validateTransactionProof(
+            subnet.id.toString(),
+            proof.key,
+            proof.receiptProofValues,
+            proof.txProofValues,
+            proof.blockHash
+          );
+          console.info("sync zero index " + i + " success");
+        }
       }
     }
     console.info("end sync zero ,sleep 1 seconds");
