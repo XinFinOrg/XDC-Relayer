@@ -5,6 +5,7 @@ import bunyan from "bunyan";
 
 import { config } from "./config";
 import { Worker } from "./conntroller/worker";
+import { sync } from "./service/zero";
 
 const app = new Koa();
 
@@ -32,5 +33,5 @@ app.listen(config.port + 1, async () => {
     return;
   }
   logger.info(`Server zero relayer running on port ${config.port + 1}`);
-  await worker.syncZero();
+  await sync();
 });

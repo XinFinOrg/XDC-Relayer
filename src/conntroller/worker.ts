@@ -9,7 +9,6 @@ import { Cache } from "../service/cache";
 import { ForkingError } from "./../errors/forkingError";
 import { Nofications } from "../service/notification";
 import bunyan from "bunyan";
-import { sync } from "../service/zero";
 
 const chunkByMaxFetchSize = chunkBy(config.chunkSize);
 export class Worker {
@@ -125,10 +124,6 @@ export class Worker {
       );
       return false;
     }
-  }
-
-  async syncZero(): Promise<void> {
-    await sync();
   }
 
   async synchronization(): Promise<void> {
