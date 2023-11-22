@@ -74,7 +74,7 @@ export const parentnetPublicClient = createPublicClient({
 
 export const getBlock = async () => {
   const blockNumber = await subnetPublicClient.getBlockNumber();
-  console.log("viem:" + blockNumber);
+  console.info("viem:" + blockNumber);
 };
 
 export const validateTransactionProof = async (
@@ -91,7 +91,7 @@ export const validateTransactionProof = async (
     args: [cid, key, receiptProof, transactionProof, blockhash],
   });
   const tx = await parentnetWalletClient.writeContract(request as any);
-  console.log(tx);
+  console.info(tx);
 };
 
 export const getLatestBlockNumberFromCsc = async () => {
@@ -115,7 +115,7 @@ export const getIndexFromParentnet = async (): Promise<any> => {
 };
 
 export const getProof = async (txhash: string): Promise<any> => {
-  const res = await fetch("https://devnetstats.apothem.network/subnet", {
+  const res = await fetch(process.env.SUBNET_URL, {
     method: "POST",
     body: JSON.stringify({
       jsonrpc: "2.0",
@@ -163,7 +163,7 @@ export const getPayloads = async () => {
 
 export const sync = async () => {
   while (true) {
-    console.log("start sync zero");
+    console.info("start sync zero");
     const payloads = await getPayloads();
     if (payloads.length == 0) return;
 
@@ -177,7 +177,7 @@ export const sync = async () => {
     const cscBlockNumber = await getLatestBlockNumberFromCsc();
 
     if (cscBlockNumber < lastBlockNumber) {
-      console.log(
+      console.info(
         "wait for csc block lastBlockNumber:" +
           lastBlockNumber +
           " cscBlockNumber:" +
@@ -199,10 +199,10 @@ export const sync = async () => {
           proof.txProofValues,
           proof.blockHash
         );
-        console.log("sync zero index " + i + " success");
+        console.info("sync zero index " + i + " success");
       }
     }
-    console.log("end sync zero ,sleep 10 seconds");
+    console.info("end sync zero ,sleep 1 seconds");
     await sleep(1000);
   }
 };
