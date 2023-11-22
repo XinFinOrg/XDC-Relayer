@@ -28,53 +28,74 @@ const parentnetEndpointContract = {
   address: process.env.PARENTNET_ZERO_CONTRACT,
   abi: endpointABI,
 };
-const xdcparentnet = {
-  id: 551,
-  name: "XDC Devnet",
-  network: "XDC Devnet",
-  nativeCurrency: {
-    decimals: 18,
-    name: "XDC",
-    symbol: "XDC",
-  },
-  rpcUrls: {
-    public: { http: [process.env.PARENTCHAIN_URL] },
-    default: { http: [process.env.PARENTCHAIN_URL] },
-  },
+const xdcparentnet = async () => {
+  return {
+    id: await getChainId(process.env.PARENTCHAIN_URL),
+    name: "XDC Devnet",
+    network: "XDC Devnet",
+    nativeCurrency: {
+      decimals: 18,
+      name: "XDC",
+      symbol: "XDC",
+    },
+    rpcUrls: {
+      public: { http: [process.env.PARENTCHAIN_URL] },
+      default: { http: [process.env.PARENTCHAIN_URL] },
+    },
+  };
 };
-const xdcsubnet = {
-  id: 12755,
-  name: "XDC Subnet",
-  network: "XDC Subnet",
-  nativeCurrency: {
-    decimals: 18,
-    name: "XDC",
-    symbol: "XDC",
-  },
-  rpcUrls: {
-    public: { http: [process.env.SUBNET_URL] },
-    default: { http: [process.env.SUBNET_URL] },
-  },
+const xdcsubnet = async () => {
+  return {
+    id: await getChainId(process.env.SUBNET_URL),
+    name: "XDC Subnet",
+    network: "XDC Subnet",
+    nativeCurrency: {
+      decimals: 18,
+      name: "XDC",
+      symbol: "XDC",
+    },
+    rpcUrls: {
+      public: { http: [process.env.SUBNET_URL] },
+      default: { http: [process.env.SUBNET_URL] },
+    },
+  };
 };
 
-const parentnetWalletClient = createWalletClient({
-  account,
-  chain: xdcparentnet,
-  transport: http(),
-});
-export const subnetPublicClient = createPublicClient({
-  chain: xdcsubnet,
-  transport: http(),
-});
+const getChainId = async (url: string) => {
+  const res = await fetch(url, {
+    method: "POST",
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "eth_chainId",
+      params: [],
+    }),
+    headers: { "Content-Type": "application/json" },
+  });
+  const json = await res.json();
+  return json?.result;
+};
 
-export const parentnetPublicClient = createPublicClient({
-  chain: xdcparentnet,
-  transport: http(),
-});
+const createParentnetWalletClient = async () => {
+  return createWalletClient({
+    account,
+    chain: await xdcparentnet(),
+    transport: http(),
+  });
+};
 
-export const getBlock = async () => {
-  const blockNumber = await subnetPublicClient.getBlockNumber();
-  console.info("viem:" + blockNumber);
+export const createSubnetPublicClient = async () => {
+  return createPublicClient({
+    chain: await xdcsubnet(),
+    transport: http(),
+  });
+};
+
+export const createParentnetPublicClient = async () => {
+  return createPublicClient({
+    chain: await xdcparentnet(),
+    transport: http(),
+  });
 };
 
 export const validateTransactionProof = async (
@@ -84,6 +105,8 @@ export const validateTransactionProof = async (
   transactionProof: string[],
   blockhash: string
 ) => {
+  const parentnetPublicClient = await createParentnetPublicClient();
+  const parentnetWalletClient = await createParentnetWalletClient();
   const { request } = await parentnetPublicClient.simulateContract({
     ...(parentnetEndpointContract as any),
     account,
@@ -95,6 +118,7 @@ export const validateTransactionProof = async (
 };
 
 export const getLatestBlockNumberFromCsc = async () => {
+  const parentnetPublicClient = await createParentnetPublicClient();
   const blocks = (await parentnetPublicClient.readContract({
     ...(parentnetCSCContract as any),
     functionName: "getLatestBlocks",
@@ -105,10 +129,12 @@ export const getLatestBlockNumberFromCsc = async () => {
 };
 
 export const getIndexFromParentnet = async (): Promise<any> => {
+  const parentnetPublicClient = await createParentnetPublicClient();
+  const subnet = await xdcsubnet();
   const chain = (await parentnetPublicClient.readContract({
     ...(parentnetEndpointContract as any),
     functionName: "getChain",
-    args: [xdcsubnet.id],
+    args: [subnet.id],
   })) as { lastIndex: number };
 
   return chain?.lastIndex;
@@ -130,13 +156,14 @@ export const getProof = async (txhash: string): Promise<any> => {
 };
 
 export const getPayloads = async () => {
+  const subnetPublicClient = await createSubnetPublicClient();
   const payloads = [] as any;
   const logs = await subnetPublicClient.getContractEvents({
     ...(subnetEndpointContract as any),
     fromBlock: BigInt(0),
     eventName: "Packet",
   });
-
+  const parentnet = await xdcparentnet();
   logs?.forEach((log) => {
     const values = decodeAbiParameters(
       [
@@ -150,7 +177,7 @@ export const getPayloads = async () => {
       `0x${log.data.substring(130)}`
     );
 
-    if (Number(values[3]) == xdcparentnet.id) {
+    if (Number(values[3]) == parentnet.id) {
       const list = [...values];
       list.push(log.transactionHash);
       list.push(log.blockNumber);
@@ -188,12 +215,12 @@ export const sync = async () => {
     }
 
     //it's better to fetch data from csc on parentnet , to get the latest subnet header data
-
+    const subnet = await xdcsubnet();
     if (lastIndexFromSubnet > lastIndexfromParentnet) {
       for (let i = lastIndexfromParentnet; i <= lastIndexFromSubnet; i++) {
         const proof = await getProof(payloads[i][6]);
         await validateTransactionProof(
-          xdcsubnet.id.toString(),
+          subnet.id.toString(),
           proof.key,
           proof.receiptProofValues,
           proof.txProofValues,
