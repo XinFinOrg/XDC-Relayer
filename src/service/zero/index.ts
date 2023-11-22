@@ -9,6 +9,7 @@ import endpointABI from "../../abi/endpointABI.json";
 import cscABI from "../../abi/cscABI.json";
 import fetch from "node-fetch";
 import { sleep } from "../../utils";
+import Web3 from "web3";
 
 const account = privateKeyToAccount(`0x${process.env.ZERO_WALLET_PK}`);
 
@@ -62,18 +63,8 @@ const xdcsubnet = async () => {
 };
 
 const getChainId = async (url: string) => {
-  const res = await fetch(url, {
-    method: "POST",
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "eth_chainId",
-      params: [],
-    }),
-    headers: { "Content-Type": "application/json" },
-  });
-  const json = await res.json();
-  return Number(json?.result);
+  const web3 = new Web3(url);
+  return web3.eth.getChainId();
 };
 
 const createParentnetWalletClient = async () => {
