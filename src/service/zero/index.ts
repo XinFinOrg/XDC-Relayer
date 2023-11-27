@@ -11,7 +11,10 @@ import fetch from "node-fetch";
 import { sleep } from "../../utils";
 import Web3 from "web3";
 
-const account = privateKeyToAccount(`0x${process.env.ZERO_WALLET_PK}`);
+let account: any = null;
+if (!process.env.ZERO_WALLET_PK) {
+  account = privateKeyToAccount(`0x${process.env.ZERO_WALLET_PK}`);
+}
 
 const csc = process.env.CHECKPOINT_CONTRACT;
 
