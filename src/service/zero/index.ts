@@ -4,15 +4,15 @@ import {
   http,
   decodeAbiParameters,
 } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { privateKeyToAccount, PrivateKeyAccount } from "viem/accounts";
 import endpointABI from "../../abi/endpointABI.json";
 import cscABI from "../../abi/cscABI.json";
 import fetch from "node-fetch";
 import { sleep } from "../../utils";
 import Web3 from "web3";
 
-let account: any = null;
-if (!process.env.ZERO_WALLET_PK) {
+let account: PrivateKeyAccount = null;
+if (process.env.ZERO_WALLET_PK) {
   account = privateKeyToAccount(`0x${process.env.ZERO_WALLET_PK}`);
 }
 
