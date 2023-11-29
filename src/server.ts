@@ -19,7 +19,7 @@ const worker = new Worker(config, logger);
 app.use(bodyParser());
 
 app.listen(config.port, async () => {
-  if (!process.env.PARENTCHAIN_WALLET_PK) {
+  if (!process.env.PARENTNET_WALLET_PK) {
     logger.error("csc pk not found ,will dont running csc relayer");
     return;
   }

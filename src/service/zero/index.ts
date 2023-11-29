@@ -34,7 +34,7 @@ const parentnetEndpointContract = {
 };
 const xdcparentnet = async () => {
   return {
-    id: await getChainId(process.env.PARENTCHAIN_URL),
+    id: await getChainId(process.env.PARENTNET_URL),
     name: "XDC Devnet",
     network: "XDC Devnet",
     nativeCurrency: {
@@ -43,8 +43,8 @@ const xdcparentnet = async () => {
       symbol: "XDC",
     },
     rpcUrls: {
-      public: { http: [process.env.PARENTCHAIN_URL] },
-      default: { http: [process.env.PARENTCHAIN_URL] },
+      public: { http: [process.env.PARENTNET_URL] },
+      default: { http: [process.env.PARENTNET_URL] },
     },
   };
 };
