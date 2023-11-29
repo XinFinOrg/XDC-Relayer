@@ -16,6 +16,7 @@ To build and run this app locally you will need:
 npm install
 ```
 
+
 - Set up .env
   Copy over the .example.env file and override the values to appropriate ones
   The new file name shall be `.env`
