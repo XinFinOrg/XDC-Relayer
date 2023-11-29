@@ -12,8 +12,8 @@ import { sleep } from "../../utils";
 import Web3 from "web3";
 
 let account: PrivateKeyAccount = null;
-if (process.env.ZERO_WALLET_PK) {
-  account = privateKeyToAccount(`0x${process.env.ZERO_WALLET_PK}`);
+if (process.env.PARENTNET_ZERO_WALLET_PK) {
+  account = privateKeyToAccount(`0x${process.env.PARENTNET_ZERO_WALLET_PK}`);
 }
 
 const csc = process.env.CHECKPOINT_CONTRACT;
