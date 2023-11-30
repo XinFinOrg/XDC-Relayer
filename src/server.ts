@@ -19,7 +19,7 @@ const worker = new Worker(config, logger);
 app.use(bodyParser());
 
 app.listen(config.port, async () => {
-  if (!process.env.PARENTCHAIN_WALLET_PK) {
+  if (!process.env.PARENTNET_WALLET_PK) {
     logger.error("csc pk not found ,will dont running csc relayer");
     return;
   }
@@ -28,7 +28,7 @@ app.listen(config.port, async () => {
 });
 
 app.listen(config.port + 1, async () => {
-  if (!process.env.ZERO_WALLET_PK) {
+  if (!process.env.PARENTNET_ZERO_WALLET_PK) {
     logger.error("zero pk not found ,will dont running zero relayer");
     return;
   }

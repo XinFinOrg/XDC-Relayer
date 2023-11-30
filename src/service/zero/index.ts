@@ -12,8 +12,8 @@ import { sleep } from "../../utils";
 import Web3 from "web3";
 
 let account: PrivateKeyAccount = null;
-if (process.env.ZERO_WALLET_PK) {
-  account = privateKeyToAccount(`0x${process.env.ZERO_WALLET_PK}`);
+if (process.env.PARENTNET_ZERO_WALLET_PK) {
+  account = privateKeyToAccount(process.env.PARENTNET_ZERO_WALLET_PK as any);
 }
 
 const csc = process.env.CHECKPOINT_CONTRACT;
@@ -34,7 +34,7 @@ const parentnetEndpointContract = {
 };
 const xdcparentnet = async () => {
   return {
-    id: await getChainId(process.env.PARENTCHAIN_URL),
+    id: await getChainId(process.env.PARENTNET_URL),
     name: "XDC Devnet",
     network: "XDC Devnet",
     nativeCurrency: {
@@ -43,8 +43,8 @@ const xdcparentnet = async () => {
       symbol: "XDC",
     },
     rpcUrls: {
-      public: { http: [process.env.PARENTCHAIN_URL] },
-      default: { http: [process.env.PARENTCHAIN_URL] },
+      public: { http: [process.env.PARENTNET_URL] },
+      default: { http: [process.env.PARENTNET_URL] },
     },
   };
 };

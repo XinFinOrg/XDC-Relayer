@@ -49,11 +49,11 @@ const config: Config = {
   },
   mainnet: {
     url:
-      process.env.PARENTCHAIN_URL ||
+      process.env.PARENTNET_URL ||
       "https://devnetstats.apothem.network/mainnet",
     smartContractAddress: process.env.CHECKPOINT_CONTRACT || "",
     accountPK:
-      process.env.PARENTCHAIN_WALLET_PK ||
+      process.env.PARENTNET_WALLET_PK ||
       "0xa6538b992365dd26bbc2391ae6639bac0ed8599f8b45bca7c28c105959f02af4", // Default to a dummy key
     submitTransactionWaitingTime: +process.env.MN_TX_SUBMIT_WAITING_TIME || 100,
   },
