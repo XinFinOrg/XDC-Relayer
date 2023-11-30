@@ -13,7 +13,9 @@ import Web3 from "web3";
 
 let account: PrivateKeyAccount = null;
 if (process.env.PARENTNET_ZERO_WALLET_PK) {
-  account = privateKeyToAccount((process.env.PARENTNET_ZERO_WALLET_PK as `0x${string}`));
+  account = privateKeyToAccount(
+    ("0x" + process.env.PARENTNET_ZERO_WALLET_PK) as any
+  );
 }
 
 const csc = process.env.CHECKPOINT_CONTRACT;
