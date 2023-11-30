@@ -68,6 +68,7 @@ const xdcsubnet = async () => {
 };
 
 const getChainId = async (url: string) => {
+  
   const web3 = new Web3(url);
   return web3.eth.getChainId();
 };
