@@ -64,9 +64,11 @@ export class Processors implements ProcessorInterface {
         case "lite":
           modes.push(Mode.LITE);
           break;
-        default:
+        case "full":
           modes.push(Mode.STANDARD);
           break;
+        default:
+          throw new Error("No avaiable mode from mainnet smart contract API");
       }
     }
     

@@ -138,7 +138,7 @@ export class MainnetService {
     }
   }
 
-  async Mode(): Promise<string> {
+  async Mode(): Promise<"lite"| "full"> {
     try {
       return this.smartContractInstance.methods.MODE().call();
     } catch (error) {
