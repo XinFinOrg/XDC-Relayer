@@ -18,7 +18,7 @@ export interface SmartContractData {
 
 const TRANSACTION_GAS_NUMBER = 12500000000;
 
-export class MainnetClient {
+export class MainnetService {
   private web3: Web3;
   private smartContractInstance: Contract;
   private mainnetAccount: Account;
@@ -140,16 +140,15 @@ export class MainnetClient {
 
   async Mode(): Promise<string> {
     try {
-      const result = await this.smartContractInstance.methods.MODE().call();
-      return result;
+      return this.smartContractInstance.methods.MODE().call();
     } catch (error) {
-      this.logger.error("Fail to get mode from mainnet");
+      this.logger.error("Fail to get mode from mainnet smart contract");
       throw error;
     }
   }
 }
 
-export class LiteMainnetClient {
+export class LiteMainnetService {
   private web3: Web3;
   private liteSmartContractInstance: Contract;
   private mainnetAccount: Account;
@@ -339,16 +338,6 @@ export class LiteMainnetClient {
       this.logger.error("Fail to commitHeader to mainnnet", {
         message: error.message,
       });
-      throw error;
-    }
-  }
-
-  async Mode(): Promise<string> {
-    try {
-      const result = await this.liteSmartContractInstance.methods.MODE().call();
-      return result;
-    } catch (error) {
-      this.logger.error("Fail to get mode from mainnet");
       throw error;
     }
   }
