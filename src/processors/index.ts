@@ -7,9 +7,9 @@ import { Standard } from "./standard";
 import { MainnetService } from "../service/mainnet";
 
 enum Mode {
-  LITE,
-  STANDARD,
-  ZERO
+  LITE = "LITE",
+  STANDARD = "STANDARD",
+  ZERO = "ZERO"
 }
 
 export class Processors implements ProcessorInterface {
