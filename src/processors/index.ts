@@ -58,17 +58,20 @@ export class Processors implements ProcessorInterface {
   
   private async getRunningModes(): Promise<Mode[]> {
     const modes = [];
-    const mainnetSmartContractMode = await this.mainnetService.Mode();
-    switch (mainnetSmartContractMode) {
-      case "lite":
-        modes.push(Mode.LITE);
-        break;
-      default:
-        modes.push(Mode.STANDARD);
-        break;
+    if (config.relayerCsc.isEnabled) {
+      const mainnetSmartContractMode = await this.mainnetService.Mode();
+      switch (mainnetSmartContractMode) {
+        case "lite":
+          modes.push(Mode.LITE);
+          break;
+        default:
+          modes.push(Mode.STANDARD);
+          break;
+      }
     }
     
     // TODO: Now check xdc-zero
+    this.logger.info("Running modes: ", modes);
     return modes;
   }
 }
