@@ -29,6 +29,7 @@ export class Standard implements ProcessorInterface {
   }
   
   init() {
+    this.logger.info("Initialising XDC relayer");
     this.queue.process(async (_, done) => {
       this.logger.info("⏰ Executing normal flow periodically");
       try {
@@ -50,7 +51,6 @@ export class Standard implements ProcessorInterface {
     try {
       // Stop and remove repeatable jobs
       await this.queue.removeRepeatable(NAME, REPEAT_JOB_OPT.repeat);
-        
       // Clean timer
       this.cache.cleanCache();
       // Pull latest confirmed tx from mainnet
@@ -58,12 +58,11 @@ export class Standard implements ProcessorInterface {
       // Pull latest confirm block from subnet
       const lastestSubnetCommittedBlock =
         await this.subnetService.getLastCommittedBlockInfo();
-
       const { shouldProcess, from } = await this.shouldProcessSync(
         smartContractData,
         lastestSubnetCommittedBlock
       );
-
+      
       if (shouldProcess) {
         await this.submitTxs(
           from,

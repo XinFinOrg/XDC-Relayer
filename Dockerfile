@@ -11,6 +11,9 @@ COPY package*.json ./
 RUN npm install
 RUN npm run build
 
+RUN apk --update add redis
+RUN npm install -g concurrently
+
 EXPOSE 3000
 
-CMD [ "npm", "run", "start" ]
+CMD concurrently "/usr/bin/redis-server --bind '0.0.0.0'" "sleep 5s; npm run start"

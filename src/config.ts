@@ -21,9 +21,9 @@ export interface NotificationConfig {
 
 export interface XdcZeroConfig {
   isEnabled: boolean;
-  subnetZeroContractAddress: string;
-  parentChainZeroContractAddress: string;
-  walletPk: string;
+  subnetZeroContractAddress?: string;
+  parentChainZeroContractAddress?: string;
+  walletPk?: string;
 }
 
 export interface Config {
@@ -32,13 +32,14 @@ export interface Config {
   cronJob: {
     liteJobExpression: string;
     jobExpression: string;
+    zeroJobExpression: string;
   };
   subnet: SubnetConfig;
   mainnet: MainnetConfig;
   reBootstrapWaitingTime: number;
   notification: NotificationConfig;
   chunkSize: number;
-  xdcZero: XdcZeroConfig | undefined;
+  xdcZero: XdcZeroConfig;
   relayerCsc: {
     isEnabled: boolean;
   }
@@ -53,8 +54,8 @@ const getZeroConfig = (): XdcZeroConfig => {
     isEnabled,
     subnetZeroContractAddress: process.env.SUBNET_ZERO_CONTRACT,
     parentChainZeroContractAddress: process.env.PARENTNET_ZERO_CONTRACT,
-    walletPk: process.env.PARENTNET_ZERO_WALLET_PK
-  }: undefined;
+    walletPk: process.env.PARENTNET_ZERO_WALLET_PK.startsWith("0x") ? process.env.PARENTNET_ZERO_WALLET_PK : `0x${process.env.PARENTNET_ZERO_WALLET_PK}`
+  }: { isEnabled: false };
 };
 
 const config: Config = {
@@ -63,6 +64,7 @@ const config: Config = {
   cronJob: {
     liteJobExpression: "0 */2 * * * *", // every 2min
     jobExpression: "*/20 * * * * *", // every 20s
+    zeroJobExpression: "*/10 * * * * *", // every 10s
   },
   subnet: {
     url: process.env.SUBNET_URL || "https://devnetstats.apothem.network/subnet",

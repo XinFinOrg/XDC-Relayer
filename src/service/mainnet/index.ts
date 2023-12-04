@@ -8,6 +8,8 @@ import { MainnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
 import FullABI from "./ABI/FullABI.json";
 import LiteABI from "./ABI/LiteABI.json";
+import { Web3WithExtension, mainnetExtensions } from "./extensions";
+import { NetworkInformation } from "../types";
 
 export interface SmartContractData {
   smartContractHash: string;
@@ -19,7 +21,7 @@ export interface SmartContractData {
 const TRANSACTION_GAS_NUMBER = 12500000000;
 
 export class MainnetService {
-  private web3: Web3;
+  private web3: Web3WithExtension;
   private smartContractInstance: Contract;
   private mainnetAccount: Account;
   private mainnetConfig: MainnetConfig;
@@ -32,7 +34,7 @@ export class MainnetService {
       keepAlive: true,
       agent: { https: keepaliveAgent },
     });
-    this.web3 = new Web3(provider);
+    this.web3 = new Web3(provider).extend(mainnetExtensions);
     this.smartContractInstance = new this.web3.eth.Contract(
       FullABI as AbiItem[],
       config.smartContractAddress
@@ -41,6 +43,10 @@ export class MainnetService {
       config.accountPK
     );
     this.mainnetConfig = config;
+  }
+  
+  async getNetworkInformation(): Promise<NetworkInformation> {
+    return this.web3.xdcMainnet.getNetworkInformation();
   }
 
   /*

@@ -22,6 +22,7 @@ export class Lite implements ProcessorInterface {
   }
   
   init() {
+    this.logger.info("Initialising XDC Lite relayer");
     this.queue.process(async (_, done) => {
       this.logger.info("⏰ Executing lite flow periodically");
       try {

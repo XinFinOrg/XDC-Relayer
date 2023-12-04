@@ -1,3 +1,4 @@
+import { Zero } from "./zero";
 import { config } from "./../config";
 import bunyan from "bunyan";
 import * as _ from "lodash";
@@ -17,6 +18,7 @@ export class Processors implements ProcessorInterface {
   private processors: {
     lite: Lite;
     standard: Standard;
+    zero: Zero;
   }
   private mainnetService: MainnetService;
   
@@ -24,7 +26,8 @@ export class Processors implements ProcessorInterface {
     this.logger = logger;
     this.processors = {
       lite: new Lite(logger),
-      standard: new Standard(logger)
+      standard: new Standard(logger),
+      zero: new Zero(logger)
       // Register more processors here
     };
     this.mainnetService = new MainnetService(config.mainnet, logger);
@@ -50,6 +53,9 @@ export class Processors implements ProcessorInterface {
         case Mode.STANDARD:
           await this.processors.standard.reset();
           break;
+        case Mode.ZERO:
+          await this.processors.zero.reset();
+          break;
         default:
           throw new Error("No avaiable modes to choose from");
       }
@@ -72,7 +78,10 @@ export class Processors implements ProcessorInterface {
       }
     }
     
-    // TODO: Now check xdc-zero
+    if (config.xdcZero.isEnabled) {
+      modes.push(Mode.ZERO);
+    }
+    
     this.logger.info("Running modes: ", modes);
     return modes;
   }
