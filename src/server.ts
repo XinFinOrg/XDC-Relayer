@@ -4,8 +4,8 @@ import cors from "@koa/cors";
 import bunyan from "bunyan";
 
 import { config } from "./config";
-import { Worker } from "./conntroller/worker";
-import { sync } from "./service/zero";
+import { Processors } from "./processors";
+// import { sync } from "./service/zero";
 
 const app = new Koa();
 
@@ -13,25 +13,13 @@ const app = new Koa();
 app.use(cors());
 const logger = bunyan.createLogger({ name: "xdc-relayer" });
 
-const worker = new Worker(config, logger);
+const processors = new Processors(logger);
 
 // Enable bodyParser with default options
 app.use(bodyParser());
 
 app.listen(config.port, async () => {
-  if (!process.env.PARENTNET_WALLET_PK) {
-    logger.error("csc pk not found ,will dont running csc relayer");
-    return;
-  }
-  logger.info(`Server csc relayer running on port ${config.port}`);
-  await worker.synchronization();
+  logger.info(`Relayer running on port ${config.port}`);
+  await processors.init().reset();
 });
 
-app.listen(config.port + 1, async () => {
-  if (!process.env.PARENTNET_ZERO_WALLET_PK) {
-    logger.error("zero pk not found ,will dont running zero relayer");
-    return;
-  }
-  logger.info(`Server zero relayer running on port ${config.port + 1}`);
-  await sync();
-});

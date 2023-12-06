@@ -8,6 +8,8 @@ import { MainnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
 import FullABI from "./ABI/FullABI.json";
 import LiteABI from "./ABI/LiteABI.json";
+import { Web3WithExtension, mainnetExtensions } from "./extensions";
+import { NetworkInformation } from "../types";
 
 export interface SmartContractData {
   smartContractHash: string;
@@ -18,8 +20,8 @@ export interface SmartContractData {
 
 const TRANSACTION_GAS_NUMBER = 12500000000;
 
-export class MainnetClient {
-  private web3: Web3;
+export class MainnetService {
+  private web3: Web3WithExtension;
   private smartContractInstance: Contract;
   private mainnetAccount: Account;
   private mainnetConfig: MainnetConfig;
@@ -32,7 +34,7 @@ export class MainnetClient {
       keepAlive: true,
       agent: { https: keepaliveAgent },
     });
-    this.web3 = new Web3(provider);
+    this.web3 = new Web3(provider).extend(mainnetExtensions);
     this.smartContractInstance = new this.web3.eth.Contract(
       FullABI as AbiItem[],
       config.smartContractAddress
@@ -41,6 +43,10 @@ export class MainnetClient {
       config.accountPK
     );
     this.mainnetConfig = config;
+  }
+  
+  async getNetworkInformation(): Promise<NetworkInformation> {
+    return this.web3.xdcMainnet.getNetworkInformation();
   }
 
   /*
@@ -138,18 +144,17 @@ export class MainnetClient {
     }
   }
 
-  async Mode(): Promise<string> {
+  async Mode(): Promise<"lite"| "full"> {
     try {
-      const result = await this.smartContractInstance.methods.MODE().call();
-      return result;
+      return this.smartContractInstance.methods.MODE().call();
     } catch (error) {
-      this.logger.error("Fail to get mode from mainnet");
+      this.logger.error("Fail to get mode from mainnet smart contract");
       throw error;
     }
   }
 }
 
-export class LiteMainnetClient {
+export class LiteMainnetService {
   private web3: Web3;
   private liteSmartContractInstance: Contract;
   private mainnetAccount: Account;
@@ -339,16 +344,6 @@ export class LiteMainnetClient {
       this.logger.error("Fail to commitHeader to mainnnet", {
         message: error.message,
       });
-      throw error;
-    }
-  }
-
-  async Mode(): Promise<string> {
-    try {
-      const result = await this.liteSmartContractInstance.methods.MODE().call();
-      return result;
-    } catch (error) {
-      this.logger.error("Fail to get mode from mainnet");
       throw error;
     }
   }

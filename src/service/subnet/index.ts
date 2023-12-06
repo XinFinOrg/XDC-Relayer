@@ -4,6 +4,7 @@ import bunyan from "bunyan";
 import { SubnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
 import { subnetExtensions, Web3WithExtension } from "./extensions";
+import { NetworkInformation } from "../types";
 
 export interface SubnetBlockInfo {
   subnetBlockHash: string;
@@ -14,8 +15,8 @@ export interface SubnetBlockInfo {
 }
 
 export class SubnetService {
-  private web3: Web3WithExtension;
-  private subnetConfig: SubnetConfig;
+  protected web3: Web3WithExtension;
+  protected subnetConfig: SubnetConfig;
   logger: bunyan;
 
   constructor(config: SubnetConfig, logger: bunyan) {
@@ -29,7 +30,11 @@ export class SubnetService {
     this.subnetConfig = config;
     this.web3 = new Web3(provider).extend(subnetExtensions);
   }
-
+  
+  async getNetworkInformation(): Promise<NetworkInformation> {
+    return this.web3.xdcSubnet.getNetworkInformation();
+  }
+  
   async getLastCommittedBlockInfo(): Promise<SubnetBlockInfo> {
     try {
       const { Hash, Number, Round, HexRLP, ParentHash } =
@@ -119,6 +124,15 @@ export class SubnetService {
         "Error while trying to fetch blockInfo by hash from subnet",
         { message: error.message, blockHash }
       );
+      throw error;
+    }
+  }
+  
+  async getTransactionAndReceiptProof(txHash: string) {
+    try {
+      return this.web3.xdcSubnet.getTransactionAndReceiptProof(txHash);  
+    } catch (error) {
+      this.logger.error("Error while trying to fetch the transaction receipt proof", error);
       throw error;
     }
   }
