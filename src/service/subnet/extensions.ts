@@ -63,7 +63,7 @@ export const subnetExtensions = {
       params: 1,
       call: "XDPoS_getV2BlockByHash"
     }, {
-      name: "networkInformation",
+      name: "getNetworkInformation",
       params: 0,
       call: "XDPoS_networkInformation"
     },

@@ -13,7 +13,7 @@ export const mainnetExtensions = {
   property: MAINNET_EXTENSION_NAME,
   methods: [
     {
-      name: "networkInformation",
+      name: "getNetworkInformation",
       call: "XDPoS_networkInformation"
     }
   ]

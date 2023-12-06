@@ -5,6 +5,7 @@ import { ZeroService } from "../service/zero";
 import { config } from "../config";
 
 const NAME = "ZERO";
+const REPEAT_JOB_OPT = { jobId: NAME, repeat: { cron: config.cronJob.zeroJobExpression}};
 
 export class Zero implements ProcessorInterface {
   private queue: Bull.Queue;
@@ -18,6 +19,7 @@ export class Zero implements ProcessorInterface {
   }
   init() {
     this.logger.info("Initialising XDC-Zero");
+    this.zeroService.init();
     this.queue.process(async (_, done) => {
       this.logger.info("⏰ Executing xdc-zero periodically");
       try {
@@ -35,7 +37,7 @@ export class Zero implements ProcessorInterface {
   }
   
   async reset(): Promise<void> {
-    await this.queue.add({}, { jobId: NAME, repeat: { cron: config.cronJob.zeroJobExpression}});
+    await this.queue.add({}, REPEAT_JOB_OPT);
   }
   
   async processEvent() {

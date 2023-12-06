@@ -72,7 +72,7 @@ export class Standard implements ProcessorInterface {
         this.cache.setLastSubmittedSubnetHeader(lastestSubnetCommittedBlock);
       }
       // Keep the "jobId: NAME" and its repeat configuration here so that bull won't create a new repeated job each time we run this code.
-      (await this.queue.add({}, REPEAT_JOB_OPT)).name;
+      await this.queue.add({}, REPEAT_JOB_OPT);
     } catch (error) {
       this.logger.error(
         `Error while bootstraping, system will go into sleep mode for ${
@@ -81,7 +81,6 @@ export class Standard implements ProcessorInterface {
       );
       await sleep(config.reBootstrapWaitingTime);
       this.reset();
-      // TODO: Add back the notification
     }
   }
   
