@@ -1,4 +1,13 @@
-import { Hex, PrivateKeyAccount, createWalletClient, PublicClient, WalletClient, createPublicClient, decodeAbiParameters, http } from "viem";
+import {
+  Hex,
+  PrivateKeyAccount,
+  createWalletClient,
+  PublicClient,
+  WalletClient,
+  createPublicClient,
+  decodeAbiParameters,
+  http,
+} from "viem";
 import bunyan from "bunyan";
 import { config } from "../../config";
 import { SubnetService } from "../subnet";
@@ -16,19 +25,25 @@ export class ZeroService {
   private subnetService: SubnetService;
   private mainnetService: MainnetService;
   private logger: Logger;
-  
+
   private parentChainWalletAccount: PrivateKeyAccount;
-  
+
   constructor(logger: bunyan) {
     this.subnetService = new SubnetService(config.subnet, logger);
     this.mainnetService = new MainnetService(config.mainnet, logger);
     this.logger = logger;
   }
-  
+
   // Initialise the client services
   async init() {
-    this.parentChainWalletAccount = privateKeyToAccount(config.xdcZero.walletPk as Hex);
-    const subnetNetworkInformation = await this.subnetService.getNetworkInformation();
+    if (config.xdcZero.walletPk) {
+      this.parentChainWalletAccount = privateKeyToAccount(
+        config.xdcZero.walletPk as Hex
+      );
+    }
+
+    const subnetNetworkInformation =
+      await this.subnetService.getNetworkInformation();
     const subnetInfo = {
       id: subnetNetworkInformation.NetworkId,
       name: subnetNetworkInformation.NetworkName,
@@ -41,15 +56,16 @@ export class ZeroService {
       rpcUrls: {
         public: { http: [config.subnet.url] },
         default: { http: [config.subnet.url] },
-      }
+      },
     };
-    
+
     this.subnetViemClient = createPublicClient({
       chain: subnetInfo,
-      transport: http()
+      transport: http(),
     });
-    
-    const mainnetNetworkInformation = await this.mainnetService.getNetworkInformation();
+
+    const mainnetNetworkInformation =
+      await this.mainnetService.getNetworkInformation();
     const mainnetInfo = {
       id: mainnetNetworkInformation.NetworkId,
       name: mainnetNetworkInformation.NetworkName,
@@ -62,33 +78,34 @@ export class ZeroService {
       rpcUrls: {
         public: { http: [config.mainnet.url] },
         default: { http: [config.mainnet.url] },
-      }
+      },
     };
-    
+
     this.mainnetViemClient = createPublicClient({
       chain: mainnetInfo,
-      transport: http()
+      transport: http(),
     });
-    
+
     this.mainnetWalletClient = createWalletClient({
       account: this.parentChainWalletAccount,
       chain: mainnetInfo,
-      transport: http()
+      transport: http(),
     });
   }
-  
+
   async getPayloads() {
     const payloads = [] as any;
     const subnetEndpointContract = {
       address: config.xdcZero.subnetZeroContractAddress,
       abi: endpointABI,
     };
-    
+
     const logs = await this.subnetViemClient.getContractEvents({
       ...(subnetEndpointContract as any),
       fromBlock: BigInt(0),
       eventName: "Packet",
     });
+
     const parentChainId = await this.mainnetViemClient.getChainId();
     logs?.forEach((log) => {
       const values = decodeAbiParameters(
@@ -102,7 +119,7 @@ export class ZeroService {
         ],
         `0x${log.data.substring(130)}`
       );
-  
+
       if (Number(values[3]) == parentChainId) {
         const list = [...values];
         list.push(log.transactionHash);
@@ -110,7 +127,7 @@ export class ZeroService {
         payloads.push(list);
       }
     });
-  
+
     return payloads;
   }
 
@@ -125,10 +142,10 @@ export class ZeroService {
       functionName: "getChain",
       args: [subnetChainId],
     })) as { lastIndex: number };
-  
+
     return chain?.lastIndex;
   }
-  
+
   async getLatestBlockNumberFromCsc() {
     const parentnetCSCContract = {
       address: config.mainnet.smartContractAddress,
@@ -139,14 +156,14 @@ export class ZeroService {
       functionName: "getLatestBlocks",
       args: [],
     })) as [any, any];
-  
+
     return blocks[1]?.number;
   }
-  
+
   async getProof(txHash: string) {
     return this.subnetService.getTransactionAndReceiptProof(txHash);
   }
-  
+
   async validateTransactionProof(
     key: string,
     receiptProof: string[],
@@ -162,9 +179,9 @@ export class ZeroService {
       ...(parentnetEndpointContract as any),
       functionName: "validateTransactionProof",
       args: [subnetChainId, key, receiptProof, transactionProof, blockhash],
-      account: this.parentChainWalletAccount
+      account: this.parentChainWalletAccount,
     });
-  
+
     const tx = await this.mainnetWalletClient.writeContract(request as any);
     this.logger.info(tx);
   }
