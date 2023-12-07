@@ -5,13 +5,16 @@ import { ZeroService } from "../service/zero";
 import { config } from "../config";
 
 const NAME = "ZERO";
-const REPEAT_JOB_OPT = { jobId: NAME, repeat: { cron: config.cronJob.zeroJobExpression}};
+const REPEAT_JOB_OPT = {
+  jobId: NAME,
+  repeat: { cron: config.cronJob.zeroJobExpression },
+};
 
 export class Zero implements ProcessorInterface {
   private queue: Bull.Queue;
   private logger: bunyan;
   private zeroService: ZeroService;
-  
+
   constructor(logger: bunyan) {
     this.logger = logger;
     this.queue = new Bull(NAME);
@@ -35,21 +38,24 @@ export class Zero implements ProcessorInterface {
     });
     return this;
   }
-  
+
   async reset(): Promise<void> {
     await this.queue.add({}, REPEAT_JOB_OPT);
   }
-  
+
   async processEvent() {
     const payloads = await this.zeroService.getPayloads();
-    if (payloads.length) {
-      this.logger.info("Nothing to process in xdc-zero, wait for the next event log");
+    if (payloads.length == 0) {
+      this.logger.info(
+        "Nothing to process in xdc-zero, wait for the next event log"
+      );
       return;
     }
     const lastPayload = payloads[payloads.length - 1];
     const lastIndexFromSubnet = lastPayload[0];
 
-    const lastIndexfromParentnet = await this.zeroService.getIndexFromParentnet();
+    const lastIndexfromParentnet =
+      await this.zeroService.getIndexFromParentnet();
 
     const lastBlockNumber = lastPayload[7];
     const cscBlockNumber = await this.zeroService.getLatestBlockNumberFromCsc();
@@ -62,7 +68,7 @@ export class Zero implements ProcessorInterface {
       );
       return;
     }
-    
+
     if (lastIndexFromSubnet > lastIndexfromParentnet) {
       for (let i = lastIndexfromParentnet; i < lastIndexFromSubnet; i++) {
         if (payloads?.[i]?.[6]) {
