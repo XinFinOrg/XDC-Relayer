@@ -107,6 +107,7 @@ export class ZeroService {
     });
 
     const parentChainId = await this.mainnetViemClient.getChainId();
+
     logs?.forEach((log) => {
       const values = decodeAbiParameters(
         [
