@@ -42,6 +42,10 @@ export class Zero implements ProcessorInterface {
   async reset(): Promise<void> {
     await this.queue.add({}, REPEAT_JOB_OPT);
   }
+  
+  async clean(): Promise<void> {
+    await this.queue.obliterate({ force: true });
+  }
 
   async processEvent() {
     const payloads = await this.zeroService.getPayloads();

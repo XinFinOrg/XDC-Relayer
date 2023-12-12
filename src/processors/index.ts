@@ -42,6 +42,9 @@ export class Processors implements ProcessorInterface {
   }
   
   async reset() {
+    // Reset all the queues first
+    await Promise.all(_.map(this.processors, async(p) => await p.clean()));
+  
     const modes: Mode[] = await this.getRunningModes();
     // Depending on the mode, we choose different processor to work on
     modes.map(async (m) => {
