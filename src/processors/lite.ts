@@ -37,6 +37,10 @@ export class Lite implements ProcessorInterface {
     return this;
   };
   
+  async clean(): Promise<void> {
+    await this.queue.obliterate({ force: true });
+  }
+  
   // In lite mode, the reset does nothing other than just trigger the jobs. We can trigger it multiple time, it has no effect
   async reset(): Promise<void> {
     await this.queue.add({}, { jobId: NAME, repeat: { cron: config.cronJob.liteJobExpression}});

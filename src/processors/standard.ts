@@ -46,6 +46,10 @@ export class Standard implements ProcessorInterface {
     return this;
   }
   
+  async clean(): Promise<void> {
+    await this.queue.obliterate({ force: true });
+  }
+  
   // Reset and start the state sync until success
   async reset() {
     try {
