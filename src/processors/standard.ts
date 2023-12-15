@@ -1,4 +1,3 @@
-import Bull from "bull";
 import bunyan from "bunyan";
 import { config } from "../config";
 import { MainnetService, SmartContractData } from "../service/mainnet";
@@ -6,26 +5,27 @@ import { SubnetBlockInfo, SubnetService } from "../service/subnet";
 import { Cache } from "../service/cache";
 import { chunkBy, sleep } from "../utils";
 import { ForkingError } from "../errors/forkingError";
-import { ProcessorInterface } from "./type";
-
-export const NAME = "STANDARD";
+import { BaseProcessor } from "./base";
 
 const chunkByMaxFetchSize = chunkBy(config.chunkSize);
+export const NAME = "STANDARD";
 const REPEAT_JOB_OPT = { jobId: NAME, repeat: { cron: config.cronJob.jobExpression}};
-
-export class Standard implements ProcessorInterface {
-  private queue: Bull.Queue;
+export class Standard extends BaseProcessor {
   private mainnetService: MainnetService;
   private subnetService: SubnetService;
   cache: Cache;
   logger: bunyan;
   
   constructor(logger: bunyan) {
+    super(NAME);
     this.logger = logger;
-    this.queue = new Bull(NAME);
     this.mainnetService = new MainnetService(config.mainnet, logger);
     this.subnetService = new SubnetService(config.subnet, logger);
     this.cache = this.cache = new Cache(logger);
+  }
+  
+  getQueue() {
+    return this.queue;
   }
   
   init() {
@@ -44,10 +44,6 @@ export class Standard implements ProcessorInterface {
       }
     });
     return this;
-  }
-  
-  async clean(): Promise<void> {
-    await this.queue.obliterate({ force: true });
   }
   
   // Reset and start the state sync until success

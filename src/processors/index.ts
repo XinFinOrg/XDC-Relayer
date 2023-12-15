@@ -1,8 +1,11 @@
-import { Zero } from "./zero";
-import { config } from "./../config";
 import bunyan from "bunyan";
 import * as _ from "lodash";
-import { ProcessorInterface } from "./type";
+import { createBullBoard } from '@bull-board/api';
+import { BullAdapter } from '@bull-board/api/bullAdapter';
+import { ExpressAdapter } from '@bull-board/express';
+
+import { Zero } from "./zero";
+import { config } from "./../config";
 import { Lite } from "./lite";
 import { Standard } from "./standard";
 import { MainnetService } from "../service/mainnet";
@@ -13,7 +16,7 @@ enum Mode {
   ZERO = "ZERO"
 }
 
-export class Processors implements ProcessorInterface {
+export class Processors {
   logger: bunyan;
   private processors: {
     lite: Lite;
@@ -34,10 +37,22 @@ export class Processors implements ProcessorInterface {
   }
   
   // Register the event process. NOTE: this won't actually start the job processing until you call the reset
-  init() {
+  init(serverAdapter: ExpressAdapter) {
+    const adapters: BullAdapter[] = [];
     _.forIn(this.processors, (p, _) => {
       p.init();
+      adapters.push(new BullAdapter(p.getQueue(), { readOnlyMode: true }));
     });
+    createBullBoard({
+      queues: adapters,
+      serverAdapter: serverAdapter,
+      options: {
+        uiConfig: {
+          boardTitle: "Relayer Status"
+        }
+      }
+    });
+    
     return this;
   }
   
