@@ -1,22 +1,21 @@
 import bunyan from "bunyan";
-import { ProcessorInterface } from "./type";
-import Bull from "bull";
 import { LiteMainnetService, SmartContractData } from "../service/mainnet";
 import { config } from "../config";
 import { SubnetService } from "../service/subnet";
 import { ForkingError } from "../errors/forkingError";
+import { BaseProcessor } from "./base";
 
-const NAME = "LITE";
 
-export class Lite implements ProcessorInterface {
+export const NAME = "LITE";
+
+export class Lite extends BaseProcessor {
   logger: bunyan;
-  private queue: Bull.Queue;
   liteMainnetService: LiteMainnetService;
   subnetService: SubnetService;
   
   constructor(logger: bunyan) {
+    super(NAME);
     this.logger = logger;
-    this.queue = new Bull(NAME);
     this.liteMainnetService = new LiteMainnetService(config.mainnet, logger);
     this.subnetService = new SubnetService(config.subnet, logger);
   }
@@ -37,10 +36,6 @@ export class Lite implements ProcessorInterface {
     return this;
   };
   
-  async clean(): Promise<void> {
-    await this.queue.obliterate({ force: true });
-  }
-  
   // In lite mode, the reset does nothing other than just trigger the jobs. We can trigger it multiple time, it has no effect
   async reset(): Promise<void> {
     await this.queue.add({}, { jobId: NAME, repeat: { cron: config.cronJob.liteJobExpression}});
@@ -60,7 +55,6 @@ export class Lite implements ProcessorInterface {
       lastestSubnetCommittedBlock.subnetBlockNumber
     );
   }
-  
   
   private async liteSubmitTxs(
     gapAndEpoch: { gap: number; epoch: number },

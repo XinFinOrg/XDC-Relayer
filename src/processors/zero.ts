@@ -1,23 +1,21 @@
-import Bull from "bull";
 import bunyan from "bunyan";
-import { ProcessorInterface } from "./type";
 import { ZeroService } from "../service/zero";
 import { config } from "../config";
+import { BaseProcessor } from "./base";
 
-const NAME = "ZERO";
+export const NAME = "ZERO";
 const REPEAT_JOB_OPT = {
   jobId: NAME,
   repeat: { cron: config.cronJob.zeroJobExpression },
 };
 
-export class Zero implements ProcessorInterface {
-  private queue: Bull.Queue;
+export class Zero extends BaseProcessor {
   private logger: bunyan;
   private zeroService: ZeroService;
 
   constructor(logger: bunyan) {
+    super(NAME);
     this.logger = logger;
-    this.queue = new Bull(NAME);
     this.zeroService = new ZeroService(logger);
   }
   init() {
@@ -38,15 +36,11 @@ export class Zero implements ProcessorInterface {
     });
     return this;
   }
-
+  
   async reset(): Promise<void> {
     await this.queue.add({}, REPEAT_JOB_OPT);
   }
   
-  async clean(): Promise<void> {
-    await this.queue.obliterate({ force: true });
-  }
-
   async processEvent() {
     const payloads = await this.zeroService.getPayloads();
     if (payloads.length == 0) {
