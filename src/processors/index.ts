@@ -39,7 +39,7 @@ export class Processors {
   // Register the event process. NOTE: this won't actually start the job processing until you call the reset
   init(serverAdapter: ExpressAdapter) {
     const adapters: BullAdapter[] = [];
-    _.forIn(this.processors, (p, _) => {
+    _.forIn(this.processors, (p) => {
       p.init();
       adapters.push(new BullAdapter(p.getQueue(), { readOnlyMode: true }));
     });
