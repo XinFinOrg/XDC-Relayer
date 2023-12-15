@@ -22,13 +22,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 const serverAdapter = new ExpressAdapter();
-serverAdapter.setBasePath('/status');
+serverAdapter.setBasePath('/');
 
-// "/status" route show the relayer job status
-app.use('/status', serverAdapter.getRouter());
+// "/" route show the relayer job status
+app.use('/', serverAdapter.getRouter());
 
 app.listen(config.port, async () => {
-  logger.info(`Relayer running on port ${config.port}, check its status at "/stats"`);
+  logger.info(`Relayer running on port ${config.port}`);
   await processors.init(serverAdapter).reset();
 });
 
