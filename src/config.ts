@@ -59,7 +59,7 @@ const getZeroConfig = (): XdcZeroConfig => {
 };
 
 const config: Config = {
-  port: +(process.env.PORT || 3000),
+  port: +(process.env.RELAYER_PORT || 4000),
   devMode: devMode,
   cronJob: {
     liteJobExpression: "0 */2 * * * *", // every 2min
