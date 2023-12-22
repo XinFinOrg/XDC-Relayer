@@ -54,6 +54,8 @@ export class Lite extends BaseProcessor {
       latestBlock,
       lastestSubnetCommittedBlock.subnetBlockNumber
     );
+    
+    return `Successfully submitted subnet header up till ${lastestSubnetCommittedBlock.subnetBlockNumber} into parent chain`;
   }
   
   private async liteSubmitTxs(

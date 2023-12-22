@@ -8,9 +8,9 @@ import { ForkingError } from "../errors/forkingError";
 import { BaseProcessor } from "./base";
 
 const chunkByMaxFetchSize = chunkBy(config.chunkSize);
-export const NAME = "STANDARD";
+export const NAME = "FULL";
 const REPEAT_JOB_OPT = { jobId: NAME, repeat: { cron: config.cronJob.jobExpression}};
-export class Standard extends BaseProcessor {
+export class Full extends BaseProcessor {
   private mainnetService: MainnetService;
   private subnetService: SubnetService;
   cache: Cache;
@@ -35,7 +35,7 @@ export class Standard extends BaseProcessor {
       try {
         done(null, await this.processEvent());
       } catch (error) {
-        this.logger.error("Fail to process standard relayer job", {
+        this.logger.error("Fail to process full relayer job", {
           message: error.message,
         });
         // Report the error
@@ -92,16 +92,16 @@ export class Standard extends BaseProcessor {
       lastCommittedBlockInfo.subnetBlockNumber <=
       lastSubmittedSubnetBlock.subnetBlockNumber
     ) {
-      this.logger.info(
-        `Already on the latest, nothing to subnet, Subnet latest: ${lastCommittedBlockInfo.subnetBlockNumber}, smart contract latest: ${lastSubmittedSubnetBlock.subnetBlockNumber}`
-      );
-      return;
+      const msg = `Already on the latest, nothing to subnet, Subnet latest: ${lastCommittedBlockInfo.subnetBlockNumber}, smart contract latest: ${lastSubmittedSubnetBlock.subnetBlockNumber}`;
+      this.logger.info(msg);
+      return msg;
     }
     await this.submitTxs(
       lastSubmittedSubnetBlock.subnetBlockNumber,
       lastCommittedBlockInfo.subnetBlockNumber
     );
     this.cache.setLastSubmittedSubnetHeader(lastCommittedBlockInfo);
+    return `Successfully submitted subnet header up till ${lastCommittedBlockInfo.subnetBlockNumber} into parent chain`;
   };
   
   

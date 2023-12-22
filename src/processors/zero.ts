@@ -44,10 +44,9 @@ export class Zero extends BaseProcessor {
   async processEvent() {
     const payloads = await this.zeroService.getPayloads();
     if (payloads.length == 0) {
-      this.logger.info(
-        "Nothing to process in xdc-zero, wait for the next event log"
-      );
-      return;
+      const msg = "Nothing to process in xdc-zero, wait for the next event log";
+      this.logger.info(msg);
+      return msg;
     }
     const lastPayload = payloads[payloads.length - 1];
     const lastIndexFromSubnet = lastPayload[0];
@@ -58,13 +57,9 @@ export class Zero extends BaseProcessor {
     const lastBlockNumber = lastPayload[7];
     const cscBlockNumber = await this.zeroService.getLatestBlockNumberFromCsc();
     if (cscBlockNumber < lastBlockNumber) {
-      this.logger.info(
-        "wait for csc block lastBlockNumber:" +
-          lastBlockNumber +
-          " cscBlockNumber:" +
-          cscBlockNumber
-      );
-      return;
+      const msg = `Wait for csc block lastBlockNumber: ${lastBlockNumber}, cscBlockNumber: ${cscBlockNumber}`;
+      this.logger.info(msg);
+      return msg;
     }
 
     if (lastIndexFromSubnet > lastIndexfromParentnet) {
@@ -81,6 +76,8 @@ export class Zero extends BaseProcessor {
         }
       }
     }
-    this.logger.info("Completed the xdc-zero sync, wait for the next cycle");
+    const msg = `Completed the xdc-zero sync up till ${lastIndexFromSubnet} from subnet, wait for the next cycle`;
+    this.logger.info(msg);
+    return msg;
   }
 }
