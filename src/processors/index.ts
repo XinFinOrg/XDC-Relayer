@@ -4,23 +4,23 @@ import { createBullBoard } from '@bull-board/api';
 import { BullAdapter } from '@bull-board/api/bullAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 
-import { Zero } from "./zero";
+import { Zero, NAME as zeroName } from "./zero";
 import { config } from "./../config";
-import { Lite } from "./lite";
-import { Standard } from "./standard";
+import { Lite, NAME as liteName } from "./lite";
+import { Full, NAME as fullName } from "./full";
 import { MainnetService } from "../service/mainnet";
 
 enum Mode {
-  LITE = "LITE",
-  STANDARD = "STANDARD",
-  ZERO = "ZERO"
+  LITE = liteName,
+  FULL = fullName,
+  ZERO = zeroName
 }
 
 export class Processors {
   logger: bunyan;
   private processors: {
     lite: Lite;
-    standard: Standard;
+    full: Full;
     zero: Zero;
   }
   private mainnetService: MainnetService;
@@ -29,7 +29,7 @@ export class Processors {
     this.logger = logger;
     this.processors = {
       lite: new Lite(logger),
-      standard: new Standard(logger),
+      full: new Full(logger),
       zero: new Zero(logger)
       // Register more processors here
     };
@@ -68,8 +68,8 @@ export class Processors {
           await this.processors.lite.reset();
           break;
         // TODO: Add more processors here. e.g XDC-ZERO
-        case Mode.STANDARD:
-          await this.processors.standard.reset();
+        case Mode.FULL:
+          await this.processors.full.reset();
           break;
         case Mode.ZERO:
           await this.processors.zero.reset();
@@ -89,7 +89,7 @@ export class Processors {
           modes.push(Mode.LITE);
           break;
         case "full":
-          modes.push(Mode.STANDARD);
+          modes.push(Mode.FULL);
           break;
         default:
           throw new Error("No avaiable mode from mainnet smart contract API");
