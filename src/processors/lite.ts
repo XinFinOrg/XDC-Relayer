@@ -43,7 +43,7 @@ export class Lite extends BaseProcessor {
   
   private async processEvent() {
     // Pull latest confirmed tx from mainnet
-    const latestBlock = await this.liteMainnetService.getLastAudittedBlock();
+    const latestBlock = await this.liteMainnetService.getLastAuditedBlock();
     // Pull latest confirm block from subnet
     const lastestSubnetCommittedBlock =
       await this.subnetService.getLastCommittedBlockInfo();
@@ -54,6 +54,8 @@ export class Lite extends BaseProcessor {
       latestBlock,
       lastestSubnetCommittedBlock.subnetBlockNumber
     );
+    
+    return `Successfully submitted subnet header up till ${lastestSubnetCommittedBlock.subnetBlockNumber} into parent chain`;
   }
   
   private async liteSubmitTxs(
@@ -123,7 +125,7 @@ export class Lite extends BaseProcessor {
         await this.liteMainnetService.submitTxs(results);
       }
 
-      const last = await this.liteMainnetService.getLastAudittedBlock();
+      const last = await this.liteMainnetService.getLastAuditedBlock();
       scCommittedHeight = last.smartContractCommittedHeight;
       scHash = last.smartContractHash;
     }

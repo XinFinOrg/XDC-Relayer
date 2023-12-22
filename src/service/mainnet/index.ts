@@ -52,7 +52,7 @@ export class MainnetService {
   /*
     A method to fetch the last subnet block that has been stored/audited in mainnet XDC
   **/
-  async getLastAudittedBlock(): Promise<SmartContractData> {
+  async getLastAuditedBlock(): Promise<SmartContractData> {
     try {
       const result = await this.smartContractInstance.methods
         .getLatestBlocks()
@@ -72,7 +72,7 @@ export class MainnetService {
           latestSmComittedHash,
           latestSmHeight
         );
-        throw new Error("Unable to get last auditted block informations");
+        throw new Error("Unable to get last audited block informations");
       }
       return {
         smartContractHash: latestBlockHash,
@@ -182,7 +182,7 @@ export class LiteMainnetService {
   /*
     A method to fetch the last subnet block that has been stored/audited in mainnet XDC
   **/
-  async getLastAudittedBlock(): Promise<SmartContractData> {
+  async getLastAuditedBlock(): Promise<SmartContractData> {
     try {
       const result = await this.liteSmartContractInstance.methods
         .getLatestBlocks()
@@ -202,7 +202,7 @@ export class LiteMainnetService {
           latestSmComittedHash,
           latestSmHeight
         );
-        throw new Error("Unable to get last auditted block informations");
+        throw new Error("Unable to get last audited block informations");
       }
       return {
         smartContractHash: latestBlockHash,
