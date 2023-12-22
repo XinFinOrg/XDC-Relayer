@@ -7,6 +7,7 @@ Relayer is a communication bridge between XDC parent chain and its subnet. It pr
 To build and run this app locally you will need:
 
 - Install [Node.js](https://nodejs.org/en/). Note, we use node 14
+- If you are running the service on your local machine, then you need a redis
 
 # Getting Started
 
