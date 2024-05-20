@@ -91,6 +91,9 @@ export class Processors {
         case "full":
           modes.push(Mode.FULL);
           break;
+        case "reverse full":
+          modes.push(Mode.FULL);
+          break;
         default:
           throw new Error("No avaiable mode from mainnet smart contract API");
       }

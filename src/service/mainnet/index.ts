@@ -144,7 +144,7 @@ export class MainnetService {
     }
   }
 
-  async Mode(): Promise<"lite"| "full"> {
+  async Mode(): Promise<"lite"| "full"| "reverse full"> {
     try {
       return this.smartContractInstance.methods.MODE().call();
     } catch (error) {
