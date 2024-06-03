@@ -1,15 +1,17 @@
 import bunyan from "bunyan";
 import { config } from "../config";
-import { MainnetService, SmartContractData } from "../service/mainnet";
-import { SubnetService, SubnetBlockInfo } from "../service/subnet";
+// import { MainnetService, SmartContractData } from "../service/mainnet";
+// import { SubnetBlockInfo, SubnetService } from "../service/subnet";
+import {SubnetService, SmartContractData } from "../service/subnet";
+import {MainnetService, MainnetBlockInfo} from "../service/mainnet";
 import { chunkBy, sleep } from "../utils";
 import { ForkingError } from "../errors/forkingError";
 import { BaseProcessor } from "./base";
 
 const chunkByMaxFetchSize = chunkBy(config.chunkSize);
-export const NAME = "FULL";
+export const NAME = "REVERSE-FULL";
 const REPEAT_JOB_OPT = { jobId: NAME, repeat: { cron: config.cronJob.jobExpression}};
-export class Full extends BaseProcessor {
+export class ReverseFull extends BaseProcessor {
   private mainnetService: MainnetService;
   private subnetService: SubnetService;
   logger: bunyan;
@@ -26,15 +28,15 @@ export class Full extends BaseProcessor {
   }
   
   init() {
-    this.logger.info("Initialising XDC relayer");
+    this.logger.info("Initialising Reverse XDC relayer");
     //TODO: check CSC mode is correct at init
-    
+
     this.queue.process(async (_, done) => {
       this.logger.info("⏰ Executing normal flow periodically");
       try {
         done(null, await this.processEvent());
       } catch (error) {
-        this.logger.error("Fail to process full relayer job", {
+        this.logger.error("Fail to process full reverse relayer job", {
           message: error.message,
         });
         // Report the error
@@ -52,22 +54,22 @@ export class Full extends BaseProcessor {
   
   async processEvent() {
     // Pull latest confirmed tx from mainnet
-    const smartContractData = await this.mainnetService.getLastAuditedBlock();
+    const smartContractData = await this.subnetService.getLastAuditedBlock();
     // Pull latest confirmed block from subnet
-    const lastestSubnetCommittedBlock =
-      await this.subnetService.getLastCommittedBlockInfo();
+    const latestMainnetCommittedBlock =
+      await this.mainnetService.getLastCommittedBlockInfo();
     
     const { shouldProcess, from, msg } = await this.shouldProcessSync(
       smartContractData,
-      lastestSubnetCommittedBlock
+      latestMainnetCommittedBlock
     );
     
     if (shouldProcess) {
       await this.submitTxs(
         from,
-        lastestSubnetCommittedBlock.subnetBlockNumber
+        latestMainnetCommittedBlock.mainnetBlockNumber
       );
-      return `Completed sync from ${from} to ${lastestSubnetCommittedBlock.subnetBlockNumber}`;
+      return `Completed sync from ${from} to ${latestMainnetCommittedBlock.mainnetBlockNumber}`;
     }
     return msg;
   };
@@ -95,9 +97,9 @@ export class Full extends BaseProcessor {
   // This method does all the necessary verifications before submit blocks as transactions into mainnet XDC
   private async shouldProcessSync(
     smartContractData: SmartContractData,
-    lastestSubnetCommittedBlock: SubnetBlockInfo
+    lastestSubnetCommittedBlock: MainnetBlockInfo
   ): Promise<{ shouldProcess: boolean; msg?: string, from?: number }> {
-    const { subnetBlockHash, subnetBlockNumber } = lastestSubnetCommittedBlock;
+    const { mainnetBlockHash, mainnetBlockNumber } = lastestSubnetCommittedBlock;
     const {
       smartContractHash,
       smartContractHeight,
@@ -105,31 +107,31 @@ export class Full extends BaseProcessor {
       smartContractCommittedHeight,
     } = smartContractData;
 
-    if (subnetBlockNumber < smartContractCommittedHeight) {
+    if (mainnetBlockNumber < smartContractCommittedHeight) {
       const subnetHashInSmartContract =
-        await this.mainnetService.getBlockHashByNumber(subnetBlockNumber);
+        await this.mainnetService.getBlockHashByNumber(mainnetBlockNumber);
 
-      if (subnetHashInSmartContract != subnetBlockHash) {
+      if (subnetHashInSmartContract != mainnetBlockHash) {
         this.logger.error(
           "⛔️ WARNING: Forking detected when smart contract is ahead of subnet"
         );
         throw new ForkingError(
-          subnetBlockNumber,
+          mainnetBlockNumber,
           subnetHashInSmartContract,
-          subnetBlockHash
+          mainnetBlockHash
         );
       }
       const msg = "Smart contract is ahead of subnet, nothing needs to be done, just wait";
       return { shouldProcess: false, msg };
-    } else if (subnetBlockNumber == smartContractCommittedHeight) {
-      if (smartContractCommittedHash != subnetBlockHash) {
+    } else if (mainnetBlockNumber == smartContractCommittedHeight) {
+      if (smartContractCommittedHash != mainnetBlockHash) {
         this.logger.error(
           "⛔️ WARNING: Forking detected when subnet and smart contract having the same height"
         );
         throw new ForkingError(
           smartContractCommittedHeight,
           smartContractCommittedHash,
-          subnetBlockHash
+          mainnetBlockHash
         );
       }
       return { shouldProcess: false, msg: "Smart contract committed and subnet are already in sync, nothing needs to be done, waiting for new blocks" };
@@ -153,17 +155,17 @@ export class Full extends BaseProcessor {
         );
       }
       // Verification for committed blocks are completed! We need to check where we shall start sync based on the last audited block (smartContractHash and height) in mainnet
-      if (smartContractHash == subnetBlockHash) {
+      if (smartContractHash == mainnetBlockHash) {
         // Same block height and hash
         return { shouldProcess: false, msg: "Smart contract latest and subnet are already in sync, nothing needs to be done, waiting for new blocks" };
-      } else if (subnetBlockNumber < smartContractHeight) {
+      } else if (mainnetBlockNumber < smartContractHeight) {
         // This is when subnet is behind the mainnet latest audited
         const subnetHashInSmartContract =
-          await this.mainnetService.getBlockHashByNumber(subnetBlockNumber);
-        if (subnetHashInSmartContract != subnetBlockHash) {
+          await this.mainnetService.getBlockHashByNumber(mainnetBlockNumber);
+        if (subnetHashInSmartContract != mainnetBlockHash) {
           // This only happens when there is a forking happened but not yet committed on mainnet, we will need to recursively submit subnet headers from diverging point
           const { divergingHeight } = await this.findDivergingPoint(
-            subnetBlockNumber
+            mainnetBlockNumber
           );
           return {
             shouldProcess: true,
@@ -203,21 +205,23 @@ export class Full extends BaseProcessor {
     heightToSearchFrom: number
   ): Promise<{ divergingHeight: number; divergingHash: string }> {
     let currentHeight = heightToSearchFrom;
-    let mainnetHash: string;
-    let subnetBlockInfo: SubnetBlockInfo;
+    // let mainnetHash: string;
+    let subnetHash: string;
+    // let subnetBlockInfo: SubnetBlockInfo;
+    let mainnetBlockInfo: MainnetBlockInfo;
   
     while (currentHeight > 0) {
-      mainnetHash = await this.mainnetService.getBlockHashByNumber(currentHeight);
-      subnetBlockInfo = await this.subnetService.getCommittedBlockInfoByNum(currentHeight);
+      subnetHash = await this.subnetService.getBlockHashByNumber(currentHeight);
+      mainnetBlockInfo = await this.mainnetService.getCommittedBlockInfoByNum(currentHeight);
   
-      if (mainnetHash != subnetBlockInfo.subnetBlockHash) {
+      if (subnetHash != mainnetBlockInfo.mainnetBlockHash) {
         currentHeight--;
       } else {
         break;
       }
     }
     return {
-      divergingHash: mainnetHash,
+      divergingHash: subnetHash,
       divergingHeight: currentHeight
     };
   }

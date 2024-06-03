@@ -3,6 +3,17 @@ import { NetworkInformation } from "../types";
 
 const SUBNET_EXTENSION_NAME = "xdcSubnet";
 
+export interface Web3WithExtension extends Web3 {
+  xdcSubnet: {
+    getLatestCommittedBlockInfo:  () => Promise<CommittedBlockInfo>
+    getV2Block: (number: string) => Promise<FetchedV2BlockInfo>
+    getV2BlockByNumber: (bluckNum: string) => Promise<FetchedV2BlockInfo>
+    getV2BlockByHash: (blockHash: string) => Promise<FetchedV2BlockInfo>
+    getNetworkInformation: () => Promise<NetworkInformation>
+    getTransactionAndReceiptProof: (txHash: string) => Promise<TxReceiptProof>
+  }
+}
+
 export interface CommittedBlockInfo {
   Hash: string;
   Number: number;
@@ -30,16 +41,7 @@ export interface TxReceiptProof {
   txRoot: string;
 }
 
-export interface Web3WithExtension extends Web3 {
-  xdcSubnet: {
-    getLatestCommittedBlockInfo:  () => Promise<CommittedBlockInfo>
-    getV2Block: (number: string) => Promise<FetchedV2BlockInfo>
-    getV2BlockByNumber: (bluckNum: string) => Promise<FetchedV2BlockInfo>
-    getV2BlockByHash: (blockHash: string) => Promise<FetchedV2BlockInfo>
-    getNetworkInformation: () => Promise<NetworkInformation>
-    getTransactionAndReceiptProof: (txHash: string) => Promise<TxReceiptProof>
-  }
-}
+
 
 export const subnetExtensions = {
   property: SUBNET_EXTENSION_NAME,

@@ -5,6 +5,9 @@ import { SubnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
 import { subnetExtensions, Web3WithExtension } from "./extensions";
 import { NetworkInformation } from "../types";
+import { Contract } from "web3-eth-contract";
+import { AbiItem } from "web3-utils";
+import { Account } from "web3-core";
 
 export interface SubnetBlockInfo {
   subnetBlockHash: string;
@@ -14,9 +17,18 @@ export interface SubnetBlockInfo {
   parentHash: string;
 }
 
+export interface SmartContractData {
+  smartContractHash: string;
+  smartContractHeight: number;
+  smartContractCommittedHeight: number;
+  smartContractCommittedHash: string;
+}
+
 export class SubnetService {
   protected web3: Web3WithExtension;
-  protected subnetConfig: SubnetConfig;
+  private smartContractInstance: Contract;
+  private subnetAccount: Account;
+  private subnetConfig: SubnetConfig;
   logger: bunyan;
 
   constructor(config: SubnetConfig, logger: bunyan) {
@@ -158,5 +170,67 @@ export class SubnetService {
       await sleep(this.subnetConfig.fetchWaitingTime);
     }
     return rlpHeaders;
+  }
+
+  // Below shall be given height provide the SM hash
+  async getBlockHashByNumber(height: number): Promise<string> {
+    try {
+      const result = await this.smartContractInstance.methods
+        .getHeaderByNumber(height)
+        .call();
+      return result[0];
+    } catch (error) {
+      this.logger.error("Fail to get block hash by number from mainnet", {
+        height,
+        message: error.message,
+      });
+      throw error;
+    }
+  }
+
+  async getLastAuditedBlock(): Promise<SmartContractData> {
+    try {
+      const result = await this.smartContractInstance.methods
+        .getLatestBlocks()
+        .call();
+      const [latestBlockHash, latestBlockHeight] = result[0];
+      const [latestSmComittedHash, latestSmHeight] = result[1];
+      if (
+        !latestBlockHash ||
+        !latestBlockHeight ||
+        !latestSmComittedHash ||
+        !latestSmHeight
+      ) {
+        this.logger.error(
+          "Invalid block hash or height received",
+          latestBlockHash,
+          latestBlockHeight,
+          latestSmComittedHash,
+          latestSmHeight
+        );
+        throw new Error("Unable to get last audited block informations");
+      }
+      return {
+        smartContractHash: latestBlockHash,
+        smartContractHeight: parseInt(latestBlockHeight),
+        smartContractCommittedHash: latestSmComittedHash,
+        smartContractCommittedHeight: parseInt(latestSmHeight),
+      };
+    } catch (error) {
+      this.logger.error(
+        "Error while trying to fetch the last audited subnet's block in XDC mainnet",
+        { message: error.message }
+      );
+      throw error;
+    }
+  }
+
+  async Mode(): Promise<"lite"| "full"| "reverse full"> {
+    try {
+      return this.smartContractInstance.methods.MODE().call();
+    } catch (error) {
+      this.logger.error("Fail to get mode from mainnet smart contract");
+      throw error;
+    }
   }
 }

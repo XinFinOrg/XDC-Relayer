@@ -4,10 +4,14 @@ dotenv.config({ path: ".env" });
 export interface SubnetConfig {
   url: string;
   fetchWaitingTime: number;
+  smartContractAddress: string;
+  accountPK: string;
+  submitTransactionWaitingTime: number;
 }
 
 export interface MainnetConfig {
   url: string;
+  fetchWaitingTime: number;
   smartContractAddress: string;
   accountPK: string;
   submitTransactionWaitingTime: number;
@@ -24,6 +28,7 @@ export interface XdcZeroConfig {
   subnetZeroContractAddress?: string;
   parentChainZeroContractAddress?: string;
   walletPk?: string;
+  subnetWalletPk?: string;
 }
 
 export interface Config {
@@ -43,18 +48,22 @@ export interface Config {
   relayerCsc: {
     isEnabled: boolean;
   }
+  reverseRelayerCsc:{
+    isEnabled: boolean;
+  }
 }
 
 const environment = process.env.NODE_ENV || "production";
 export const devMode = environment != "production";
 
 const getZeroConfig = (): XdcZeroConfig => {
-  const isEnabled: boolean = "PARENTNET_ZERO_WALLET_PK" in process.env && "SUBNET_ZERO_CONTRACT" in process.env && "PARENTNET_ZERO_CONTRACT" in process.env;
+  const isEnabled: boolean = "PARENTNET_ZERO_WALLET_PK" in process.env && "SUBNET_ZERO_WALLET_PK" in process.env && "SUBNET_ZERO_CONTRACT" in process.env && "PARENTNET_ZERO_CONTRACT" in process.env;
   return isEnabled ? {
     isEnabled,
     subnetZeroContractAddress: process.env.SUBNET_ZERO_CONTRACT,
     parentChainZeroContractAddress: process.env.PARENTNET_ZERO_CONTRACT,
-    walletPk: process.env.PARENTNET_ZERO_WALLET_PK.startsWith("0x") ? process.env.PARENTNET_ZERO_WALLET_PK : `0x${process.env.PARENTNET_ZERO_WALLET_PK}`
+    walletPk: process.env.PARENTNET_ZERO_WALLET_PK.startsWith("0x") ? process.env.PARENTNET_ZERO_WALLET_PK : `0x${process.env.PARENTNET_ZERO_WALLET_PK}`,
+    subnetWalletPk: process.env.SUBNET_WALLET_PK.startsWith("0x") ? process.env.SUBNET_WALLET_PK : `0x${process.env.SUBNET_WALLET_PK}`
   }: { isEnabled: false };
 };
 
@@ -67,21 +76,29 @@ const config: Config = {
     zeroJobExpression: "*/10 * * * * *", // every 10s
   },
   subnet: {
-    url: process.env.SUBNET_URL || "https://devnetstats.apothem.network/subnet",
+    url: process.env.SUBNET_URL || "",
+    smartContractAddress: process.env.REVERSE_CHECKPOINT_CONTRACT || "",
+    accountPK:
+      process.env.SUBNET_WALLET_PK ||
+      "0xa6538b992365dd26bbc2391ae6639bac0ed8599f8b45bca7c28c105959f02af0", // Default to a dummy key
     fetchWaitingTime: +process.env.SN_FETCHING_WAITING_TIME || 0,
+    submitTransactionWaitingTime: +process.env.MN_TX_SUBMIT_WAITING_TIME || 100,
   },
   mainnet: {
     url:
-      process.env.PARENTNET_URL ||
-      "https://devnetstats.apothem.network/mainnet",
+      process.env.PARENTNET_URL || "",
     smartContractAddress: process.env.CHECKPOINT_CONTRACT || "",
     accountPK:
       process.env.PARENTNET_WALLET_PK ||
       "0xa6538b992365dd26bbc2391ae6639bac0ed8599f8b45bca7c28c105959f02af4", // Default to a dummy key
+    fetchWaitingTime: +process.env.SN_FETCHING_WAITING_TIME || 0,
     submitTransactionWaitingTime: +process.env.MN_TX_SUBMIT_WAITING_TIME || 100,
   },
   relayerCsc: {
     isEnabled: "PARENTNET_WALLET_PK" in process.env && "CHECKPOINT_CONTRACT" in process.env && "PARENTNET_URL" in process.env
+  },
+  reverseRelayerCsc: {
+    isEnabled: "SUBNET_WALLET_PK" in process.env && "REVERSE_CHECKPOINT_CONTRACT" in process.env && "SUBNET_URL" in process.env
   },
   xdcZero: getZeroConfig(),
   reBootstrapWaitingTime: +process.env.BOOTSTRAP_FAILURE_WAIT_TIME || 120000,

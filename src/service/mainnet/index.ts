@@ -11,6 +11,13 @@ import LiteABI from "./ABI/LiteABI.json";
 import { Web3WithExtension, mainnetExtensions } from "./extensions";
 import { NetworkInformation } from "../types";
 
+export interface MainnetBlockInfo {
+  mainnetBlockHash: string;
+  mainnetBlockNumber: number;
+  mainnetBlockRound: number;
+  hexRLP: string;
+  parentHash: string;
+}
 export interface SmartContractData {
   smartContractHash: string;
   smartContractHeight: number;
@@ -18,7 +25,7 @@ export interface SmartContractData {
   smartContractCommittedHash: string;
 }
 
-const TRANSACTION_GAS_NUMBER = 12500000000;
+const TRANSACTION_GAS_NUMBER = 12500000000;   //TODO: check this is different now?, is there better way to handle?
 
 export class MainnetService {
   private web3: Web3WithExtension;
@@ -140,6 +147,67 @@ export class MainnetService {
         height,
         message: error.message,
       });
+      throw error;
+    }
+  }
+
+  async getCommittedBlockInfoByNum(blockNum: number): Promise<MainnetBlockInfo> {
+    try {
+      const { Hash, Number, Round, HexRLP, ParentHash } =
+        await this.web3.xdcMainnet.getV2Block(`0x${blockNum.toString(16)}`);
+      if (!Hash || !Number || !HexRLP || !ParentHash) {
+        this.logger.error(
+          "Invalid block hash or height or encodedRlp or ParentHash received",
+          Hash,
+          Number,
+          HexRLP,
+          ParentHash
+        );
+        throw new Error("Unable to get committed block information by height");
+      }
+      return {
+        mainnetBlockHash: Hash,
+        mainnetBlockNumber: Number,
+        mainnetBlockRound: Round,
+        hexRLP: HexRLP,
+        parentHash: ParentHash,
+      };
+    } catch (error) {
+      this.logger.error(
+        "Error while trying to fetch blockInfo by number from subnet blockNum:",
+        blockNum,
+        { message: error.message }
+      );
+      throw error;
+    }
+  }
+
+  async getLastCommittedBlockInfo(): Promise<MainnetBlockInfo> {
+    try {
+      const { Hash, Number, Round, HexRLP, ParentHash } =
+        await this.web3.xdcMainnet.getV2Block("committed");
+      if (!Hash || !Number || !HexRLP || !ParentHash) {
+        this.logger.error(
+          "Invalid block hash or height or encodedRlp or ParentHash received",
+          Hash,
+          Number,
+          HexRLP,
+          ParentHash
+        );
+        throw new Error("Unable to get latest committed block information");
+      }
+      return {
+        mainnetBlockHash: Hash,
+        mainnetBlockNumber: Number,
+        mainnetBlockRound: Round,
+        hexRLP: HexRLP,
+        parentHash: ParentHash,
+      };
+    } catch (error) {
+      this.logger.error(
+        "Error getLastCommittedBlockInfo while trying to fetch blockInfo by number from subnet",
+        { message: error.message }
+      );
       throw error;
     }
   }
@@ -347,4 +415,13 @@ export class LiteMainnetService {
       throw error;
     }
   }
+  async Mode(): Promise<"lite"| "full"| "reverse full"> {
+    try {
+      return this.liteSmartContractInstance.methods.MODE().call();
+    } catch (error) {
+      this.logger.error("Fail to get mode from mainnet smart contract");
+      throw error;
+    }
+  }
+  
 }
