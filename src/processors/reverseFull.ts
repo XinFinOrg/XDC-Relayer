@@ -1,9 +1,7 @@
 import bunyan from "bunyan";
 import { config } from "../config";
-// import { MainnetService, SmartContractData } from "../service/mainnet";
-// import { SubnetBlockInfo, SubnetService } from "../service/subnet";
-import {SubnetService, SmartContractData } from "../service/subnet";
-import {MainnetService, MainnetBlockInfo} from "../service/mainnet";
+import { SubnetService, SmartContractData } from "../service/subnet";
+import { MainnetService, MainnetBlockInfo } from "../service/mainnet";
 import { chunkBy, sleep } from "../utils";
 import { ForkingError } from "../errors/forkingError";
 import { BaseProcessor } from "./base";
@@ -55,13 +53,9 @@ export class ReverseFull extends BaseProcessor {
   async processEvent() {
     // Pull latest confirmed tx from subnet
     const smartContractData = await this.subnetService.getLastAuditedBlock();
-    this.logger.error("gram sm data from subnet");
-    this.logger.error(smartContractData);
     // Pull latest confirmed block from mainnet
     const latestMainnetCommittedBlock =
       await this.mainnetService.getLastCommittedBlockInfo();
-    this.logger.error("grab mainnet committed block");
-    this.logger.error(latestMainnetCommittedBlock.mainnetBlockNumber);
     
     const { shouldProcess, from, msg } = await this.shouldProcessSync(
       smartContractData,

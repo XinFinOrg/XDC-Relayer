@@ -17,7 +17,7 @@ export interface MainnetBlockInfo {
   mainnetBlockHash: string;
   mainnetBlockNumber: number;
   mainnetBlockRound: number;
-  hexRLP: string;
+  encodedRLP: string;
   parentHash: string;
 }
 export interface SmartContractData {
@@ -98,7 +98,7 @@ export class MainnetService {
   }
 
   async submitTxs(
-    results: Array<{ hexRLP: string; blockNum: number }>
+    results: Array<{ encodedRLP: string; blockNum: number }>
   ): Promise<void> {
     try {
       if (!results.length) return;
@@ -107,10 +107,9 @@ export class MainnetService {
           results[results.length - 1].blockNum
         } as tx into PARENTNET`
       );
-      //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
-      const hexArray = results.map((r) => "0x" + r.hexRLP);
+      const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); 
       const transactionToBeSent =
-        await this.smartContractInstance.methods.receiveHeader(hexArray);
+        await this.smartContractInstance.methods.receiveHeader(encodedHexArray);
       const gas = await transactionToBeSent.estimateGas({
         from: this.mainnetAccount.address,
       });
@@ -156,13 +155,12 @@ export class MainnetService {
     try {
       const { Hash, Number, Round, EncodedRLP, ParentHash } =
         await this.web3.xdcMainnet.getV2Block(`0x${blockNum.toString(16)}`);
-        const HexRLP = EncodedRLP;
-      if (!Hash || !Number || !HexRLP || !ParentHash) {
+      if (!Hash || !Number || !EncodedRLP || !ParentHash) {
         this.logger.error(
           "Invalid block hash or height or encodedRlp or ParentHash received",
           Hash,
           Number,
-          HexRLP,
+          EncodedRLP,
           ParentHash
         );
         throw new Error("Unable to get committed block information by height from PARENTNET");
@@ -171,7 +169,7 @@ export class MainnetService {
         mainnetBlockHash: Hash,
         mainnetBlockNumber: Number,
         mainnetBlockRound: Round,
-        hexRLP: HexRLP,
+        encodedRLP: EncodedRLP,
         parentHash: ParentHash,
       };
     } catch (error) {
@@ -188,13 +186,12 @@ export class MainnetService {
     try {
       const { Hash, Number, Round, EncodedRLP, ParentHash } =
         await this.web3.xdcMainnet.getV2Block("committed");
-      const HexRLP = EncodedRLP;
-      if (!Hash || !Number || !HexRLP || !ParentHash) {
+      if (!Hash || !Number || !EncodedRLP || !ParentHash) {
         this.logger.error(
           "Invalid block hash or height or encodedRlp or ParentHash received",
           Hash,
           Number,
-          HexRLP,
+          EncodedRLP,
           ParentHash
         );
         throw new Error("Unable to get latest committed block information from PARENTNET");
@@ -203,7 +200,7 @@ export class MainnetService {
         mainnetBlockHash: Hash,
         mainnetBlockNumber: Number,
         mainnetBlockRound: Round,
-        hexRLP: HexRLP,
+        encodedRLP: EncodedRLP,
         parentHash: ParentHash,
       };
     } catch (error) {
@@ -218,21 +215,21 @@ export class MainnetService {
   async bulkGetRlpHeaders(
     startingBlockNumber: number,
     numberOfBlocksToFetch: number
-  ): Promise<Array<{ hexRLP: string; blockNum: number }>> {
+  ): Promise<Array<{ encodedRLP: string; blockNum: number }>> {
     this.logger.info(
       "Fetch subnet node data from " +
         startingBlockNumber +
         " to " +
         (startingBlockNumber + numberOfBlocksToFetch - 1)
     );
-    const rlpHeaders: Array<{ hexRLP: string; blockNum: number }> = [];
+    const rlpHeaders: Array<{ encodedRLP: string; blockNum: number }> = [];
     for (
       let i = startingBlockNumber;
       i < startingBlockNumber + numberOfBlocksToFetch;
       i++
     ) {
-      const { hexRLP } = await this.getCommittedBlockInfoByNum(i);
-      rlpHeaders.push({ hexRLP, blockNum: i });
+      const { encodedRLP } = await this.getCommittedBlockInfoByNum(i);
+      rlpHeaders.push({ encodedRLP, blockNum: i });
       await sleep(this.mainnetConfig.fetchWaitingTime);
     }
     return rlpHeaders;
@@ -314,7 +311,7 @@ export class LiteMainnetService {
   }
 
   async submitTxs(
-    results: Array<{ hexRLP: string; blockNum: number }>
+    results: Array<{ encodedRLP: string; blockNum: number }>
   ): Promise<void> {
     try {
       if (!results.length) return;
@@ -326,10 +323,9 @@ export class LiteMainnetService {
         } as tx into PARENTNET`
       );
 
-      //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
-      const hexArray = results.map((r) => "0x" + r.hexRLP);
+      const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); 
       const transactionToBeSent =
-        await this.liteSmartContractInstance.methods.receiveHeader(hexArray);
+        await this.liteSmartContractInstance.methods.receiveHeader(encodedHexArray);
 
       const gas = await transactionToBeSent.estimateGas({
         from: this.mainnetAccount.address,
@@ -450,18 +446,4 @@ export class LiteMainnetService {
     }
   }
   
-}
-
-function base64ToHex(base64String: string) {
-  // Step 1: Decode base64 string to binary data
-  const binaryString = atob(base64String);
-
-  // Step 2: Convert binary data to hex
-  let hexString = "";
-  for (let i = 0; i < binaryString.length; i++) {
-    const hex = binaryString.charCodeAt(i).toString(16);
-    hexString += hex.length === 2 ? hex : "0" + hex;
-  }
-
-  return hexString;
 }
