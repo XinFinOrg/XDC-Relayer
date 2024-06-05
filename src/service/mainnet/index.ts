@@ -1,8 +1,8 @@
 import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 import { AbiItem } from "web3-utils";
-import { HttpsAgent } from "agentkeepalive";
 import { Account } from "web3-core";
+import { HttpsAgent } from "agentkeepalive";
 import bunyan from "bunyan";
 import { MainnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
@@ -10,6 +10,8 @@ import FullABI from "./ABI/FullABI.json";
 import LiteABI from "./ABI/LiteABI.json";
 import { Web3WithExtension, mainnetExtensions } from "./extensions";
 import { NetworkInformation } from "../types";
+
+const TRANSACTION_GAS_NUMBER = 12500000000;   //TODO: check this is different now?, is there better way to handle?
 
 export interface MainnetBlockInfo {
   mainnetBlockHash: string;
@@ -25,7 +27,6 @@ export interface SmartContractData {
   smartContractCommittedHash: string;
 }
 
-const TRANSACTION_GAS_NUMBER = 12500000000;   //TODO: check this is different now?, is there better way to handle?
 
 export class MainnetService {
   private web3: Web3WithExtension;
@@ -79,7 +80,7 @@ export class MainnetService {
           latestSmComittedHash,
           latestSmHeight
         );
-        throw new Error("Unable to get last audited block informations");
+        throw new Error("Unable to get last audited block informations from PARENTNET");
       }
       return {
         smartContractHash: latestBlockHash,
@@ -89,7 +90,7 @@ export class MainnetService {
       };
     } catch (error) {
       this.logger.error(
-        "Error while trying to fetch the last audited subnet's block in XDC mainnet",
+        "Error while trying to fetch the last audited subnet's block in XDC PARENTNET",
         { message: error.message }
       );
       throw error;
@@ -104,7 +105,7 @@ export class MainnetService {
       this.logger.info(
         `Submit the subnet block up to ${
           results[results.length - 1].blockNum
-        } as tx into mainnet`
+        } as tx into PARENTNET`
       );
       //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
       const hexArray = results.map((r) => "0x" + r.hexRLP);
@@ -128,7 +129,7 @@ export class MainnetService {
 
       await sleep(this.mainnetConfig.submitTransactionWaitingTime);
     } catch (error) {
-      this.logger.error("Fail to submit transactions into mainnet", {
+      this.logger.error("Fail to submit transactions into PARENTNET", {
         message: error.message,
       });
       throw error;
@@ -143,7 +144,7 @@ export class MainnetService {
         .call();
       return result[0];
     } catch (error) {
-      this.logger.error("Fail to get block hash by number from mainnet", {
+      this.logger.error("Fail to get block hash by number from PARENTNET", {
         height,
         message: error.message,
       });
@@ -153,8 +154,9 @@ export class MainnetService {
 
   async getCommittedBlockInfoByNum(blockNum: number): Promise<MainnetBlockInfo> {
     try {
-      const { Hash, Number, Round, HexRLP, ParentHash } =
+      const { Hash, Number, Round, EncodedRLP, ParentHash } =
         await this.web3.xdcMainnet.getV2Block(`0x${blockNum.toString(16)}`);
+        const HexRLP = EncodedRLP;
       if (!Hash || !Number || !HexRLP || !ParentHash) {
         this.logger.error(
           "Invalid block hash or height or encodedRlp or ParentHash received",
@@ -163,7 +165,7 @@ export class MainnetService {
           HexRLP,
           ParentHash
         );
-        throw new Error("Unable to get committed block information by height");
+        throw new Error("Unable to get committed block information by height from PARENTNET");
       }
       return {
         mainnetBlockHash: Hash,
@@ -174,7 +176,7 @@ export class MainnetService {
       };
     } catch (error) {
       this.logger.error(
-        "Error while trying to fetch blockInfo by number from subnet blockNum:",
+        "Error while trying to fetch blockInfo by number from PARENTNET blockNum:",
         blockNum,
         { message: error.message }
       );
@@ -184,8 +186,9 @@ export class MainnetService {
 
   async getLastCommittedBlockInfo(): Promise<MainnetBlockInfo> {
     try {
-      const { Hash, Number, Round, HexRLP, ParentHash } =
+      const { Hash, Number, Round, EncodedRLP, ParentHash } =
         await this.web3.xdcMainnet.getV2Block("committed");
+      const HexRLP = EncodedRLP;
       if (!Hash || !Number || !HexRLP || !ParentHash) {
         this.logger.error(
           "Invalid block hash or height or encodedRlp or ParentHash received",
@@ -194,7 +197,7 @@ export class MainnetService {
           HexRLP,
           ParentHash
         );
-        throw new Error("Unable to get latest committed block information");
+        throw new Error("Unable to get latest committed block information from PARENTNET");
       }
       return {
         mainnetBlockHash: Hash,
@@ -205,18 +208,41 @@ export class MainnetService {
       };
     } catch (error) {
       this.logger.error(
-        "Error getLastCommittedBlockInfo while trying to fetch blockInfo by number from subnet",
+        "Error getLastCommittedBlockInfo while trying to fetch blockInfo by number from PARENTNET",
         { message: error.message }
       );
       throw error;
     }
   }
 
+  async bulkGetRlpHeaders(
+    startingBlockNumber: number,
+    numberOfBlocksToFetch: number
+  ): Promise<Array<{ hexRLP: string; blockNum: number }>> {
+    this.logger.info(
+      "Fetch subnet node data from " +
+        startingBlockNumber +
+        " to " +
+        (startingBlockNumber + numberOfBlocksToFetch - 1)
+    );
+    const rlpHeaders: Array<{ hexRLP: string; blockNum: number }> = [];
+    for (
+      let i = startingBlockNumber;
+      i < startingBlockNumber + numberOfBlocksToFetch;
+      i++
+    ) {
+      const { hexRLP } = await this.getCommittedBlockInfoByNum(i);
+      rlpHeaders.push({ hexRLP, blockNum: i });
+      await sleep(this.mainnetConfig.fetchWaitingTime);
+    }
+    return rlpHeaders;
+  }
+
   async Mode(): Promise<"lite"| "full"| "reverse full"> {
     try {
       return this.smartContractInstance.methods.MODE().call();
     } catch (error) {
-      this.logger.error("Fail to get mode from mainnet smart contract");
+      this.logger.error("Fail to get mode from PARENTNET smart contract");
       throw error;
     }
   }
@@ -270,7 +296,7 @@ export class LiteMainnetService {
           latestSmComittedHash,
           latestSmHeight
         );
-        throw new Error("Unable to get last audited block informations");
+        throw new Error("Unable to get last audited block informations from PARENTNET");
       }
       return {
         smartContractHash: latestBlockHash,
@@ -280,7 +306,7 @@ export class LiteMainnetService {
       };
     } catch (error) {
       this.logger.error(
-        "Error while trying to fetch the last audited subnet's block in XDC mainnet",
+        "Error while trying to fetch the last audited subnet's block in XDC PARENTNET",
         { message: error.message }
       );
       throw error;
@@ -297,7 +323,7 @@ export class LiteMainnetService {
           results[0].blockNum
         } and commit block up to ${
           results[results.length - 1].blockNum
-        } as tx into mainnet`
+        } as tx into PARENTNET`
       );
 
       //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
@@ -323,7 +349,7 @@ export class LiteMainnetService {
 
       await sleep(this.mainnetConfig.submitTransactionWaitingTime);
     } catch (error) {
-      this.logger.error("Fail to submit transactions into mainnet", {
+      this.logger.error("Fail to submit transactions into PARENTNET", {
         message: error.message,
       });
       throw error;
@@ -338,7 +364,7 @@ export class LiteMainnetService {
         .call();
       return result[0];
     } catch (error) {
-      this.logger.error("Fail to get block hash by number from mainnet", {
+      this.logger.error("Fail to get block hash by number from PARENTNET", {
         height,
         message: error.message,
       });
@@ -357,7 +383,7 @@ export class LiteMainnetService {
         .call();
       return { gap, epoch };
     } catch (error) {
-      this.logger.error("Fail to getGapAndEpoch from mainnet", {
+      this.logger.error("Fail to getGapAndEpoch from PARENTNET", {
         message: error.message,
       });
       throw error;
@@ -424,4 +450,18 @@ export class LiteMainnetService {
     }
   }
   
+}
+
+function base64ToHex(base64String: string) {
+  // Step 1: Decode base64 string to binary data
+  const binaryString = atob(base64String);
+
+  // Step 2: Convert binary data to hex
+  let hexString = "";
+  for (let i = 0; i < binaryString.length; i++) {
+    const hex = binaryString.charCodeAt(i).toString(16);
+    hexString += hex.length === 2 ? hex : "0" + hex;
+  }
+
+  return hexString;
 }

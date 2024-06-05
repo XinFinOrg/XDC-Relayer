@@ -1,13 +1,16 @@
 import Web3 from "web3";
+import { Contract } from "web3-eth-contract";
+import { AbiItem } from "web3-utils";
+import { Account } from "web3-core";
 import { HttpsAgent } from "agentkeepalive";
 import bunyan from "bunyan";
 import { SubnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
 import { subnetExtensions, Web3WithExtension } from "./extensions";
 import { NetworkInformation } from "../types";
-import { Contract } from "web3-eth-contract";
-import { AbiItem } from "web3-utils";
-import { Account } from "web3-core";
+import FullABI from "./ABI/FullABI.json";
+
+const TRANSACTION_GAS_NUMBER = 12500000000;   //TODO: check this is different now?, is there better way to handle?
 
 export interface SubnetBlockInfo {
   subnetBlockHash: string;
@@ -38,9 +41,15 @@ export class SubnetService {
       keepAlive: true,
       agent: { https: keepaliveAgent },
     });
-
-    this.subnetConfig = config;
     this.web3 = new Web3(provider).extend(subnetExtensions);
+    this.smartContractInstance = new this.web3.eth.Contract(
+      FullABI as AbiItem[],
+      config.smartContractAddress
+    );
+    this.subnetAccount =  this.web3.eth.accounts.privateKeyToAccount(
+      config.accountPK
+    );
+    this.subnetConfig = config;
   }
   
   async getNetworkInformation(): Promise<NetworkInformation> {
@@ -49,8 +58,12 @@ export class SubnetService {
   
   async getLastCommittedBlockInfo(): Promise<SubnetBlockInfo> {
     try {
-      const { Hash, Number, Round, HexRLP, ParentHash } =
-        await this.web3.xdcSubnet.getV2Block("committed");
+      const x = await this.web3.xdcSubnet.getV2Block("committed");
+      console.log(x);
+      const { Hash, Number, Round, EncodedRLP, ParentHash } =
+        // await this.web3.xdcSubnet.getV2Block("committed");
+        await this.web3.xdcSubnet.getV2Block("latest");
+      const HexRLP = EncodedRLP;
       if (!Hash || !Number || !HexRLP || !ParentHash) {
         this.logger.error(
           "Invalid block hash or height or encodedRlp or ParentHash received",
@@ -59,7 +72,7 @@ export class SubnetService {
           HexRLP,
           ParentHash
         );
-        throw new Error("Unable to get latest committed block information");
+        throw new Error("Unable to get latest committed block information on SUBNET");
       }
       return {
         subnetBlockHash: Hash,
@@ -79,8 +92,9 @@ export class SubnetService {
 
   async getCommittedBlockInfoByNum(blockNum: number): Promise<SubnetBlockInfo> {
     try {
-      const { Hash, Number, Round, HexRLP, ParentHash } =
+      const { Hash, Number, Round, EncodedRLP, ParentHash } =
         await this.web3.xdcSubnet.getV2Block(`0x${blockNum.toString(16)}`);
+      const HexRLP = EncodedRLP;
       if (!Hash || !Number || !HexRLP || !ParentHash) {
         this.logger.error(
           "Invalid block hash or height or encodedRlp or ParentHash received",
@@ -89,7 +103,7 @@ export class SubnetService {
           HexRLP,
           ParentHash
         );
-        throw new Error("Unable to get committed block information by height");
+        throw new Error("Unable to get committed block information by height on SUBNET");
       }
       return {
         subnetBlockHash: Hash,
@@ -100,7 +114,7 @@ export class SubnetService {
       };
     } catch (error) {
       this.logger.error(
-        "Error while trying to fetch blockInfo by number from subnet blockNum:",
+        "Error while trying to fetch blockInfo by number from SUBNET blockNum:",
         blockNum,
         { message: error.message }
       );
@@ -112,8 +126,9 @@ export class SubnetService {
     blockHash: string
   ): Promise<SubnetBlockInfo> {
     try {
-      const { Hash, Number, Round, HexRLP, ParentHash } =
+      const { Hash, Number, Round, EncodedRLP, ParentHash } =
         await this.web3.xdcSubnet.getV2BlockByHash(blockHash);
+      const HexRLP = EncodedRLP;
       if (!Hash || !Number || !HexRLP || !ParentHash) {
         this.logger.error(
           "Invalid block hash or height or encodedRlp or ParentHash received",
@@ -122,7 +137,7 @@ export class SubnetService {
           HexRLP,
           ParentHash
         );
-        throw new Error("Unable to get committed block information by hash");
+        throw new Error("Unable to get committed block information by hash on SUBNET");
       }
       return {
         subnetBlockHash: Hash,
@@ -133,7 +148,7 @@ export class SubnetService {
       };
     } catch (error) {
       this.logger.error(
-        "Error while trying to fetch blockInfo by hash from subnet",
+        "Error while trying to fetch blockInfo by hash from SUBNET",
         { message: error.message, blockHash }
       );
       throw error;
@@ -144,7 +159,7 @@ export class SubnetService {
     try {
       return this.web3.xdcSubnet.getTransactionAndReceiptProof(txHash);  
     } catch (error) {
-      this.logger.error("Error while trying to fetch the transaction receipt proof", error);
+      this.logger.error("Error while trying to fetch the transaction receipt proof on SUBNET", error);
       throw error;
     }
   }
@@ -180,7 +195,7 @@ export class SubnetService {
         .call();
       return result[0];
     } catch (error) {
-      this.logger.error("Fail to get block hash by number from mainnet", {
+      this.logger.error("Fail to get block hash by number from SUBNET", {
         height,
         message: error.message,
       });
@@ -208,7 +223,7 @@ export class SubnetService {
           latestSmComittedHash,
           latestSmHeight
         );
-        throw new Error("Unable to get last audited block informations");
+        throw new Error("Unable to get last audited block informations on SUBNET");
       }
       return {
         smartContractHash: latestBlockHash,
@@ -218,19 +233,73 @@ export class SubnetService {
       };
     } catch (error) {
       this.logger.error(
-        "Error while trying to fetch the last audited subnet's block in XDC mainnet",
+        "Error while trying to fetch the last audited subnet's block in XDC SUBNET",
         { message: error.message }
       );
       throw error;
     }
   }
 
+  async submitTxs(
+    results: Array<{ hexRLP: string; blockNum: number }>
+  ): Promise<void> {
+    try {
+      if (!results.length) return;
+      this.logger.info(
+        `Submit the subnet block up to ${
+          results[results.length - 1].blockNum
+        } as tx into PARENTNET`
+      );
+      //const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
+      const hexArray = results.map((r) => "0x" + r.hexRLP);
+      const transactionToBeSent =
+        await this.smartContractInstance.methods.receiveHeader(hexArray);
+      const gas = await transactionToBeSent.estimateGas({
+        from: this.subnetAccount.address,
+      });
+      const options = {
+        to: transactionToBeSent._parent._address,
+        data: transactionToBeSent.encodeABI(),
+        gas,
+        gasPrice: TRANSACTION_GAS_NUMBER,
+      };
+      const signed = await this.web3.eth.accounts.signTransaction(
+        options,
+        this.subnetAccount.privateKey
+      );
+
+      await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
+
+      await sleep(this.subnetConfig.submitTransactionWaitingTime);
+    } catch (error) {
+      this.logger.error("Fail to submit transactions into PARENTNET", {
+        message: error.message,
+      });
+      throw error;
+    }
+  }
+
+
   async Mode(): Promise<"lite"| "full"| "reverse full"> {
     try {
       return this.smartContractInstance.methods.MODE().call();
     } catch (error) {
-      this.logger.error("Fail to get mode from mainnet smart contract");
+      this.logger.error("Fail to get mode from SUBNET smart contract");
       throw error;
     }
   }
+}
+
+function base64ToHex(base64String: string) {
+  // Step 1: Decode base64 string to binary data
+  const binaryString = atob(base64String);
+
+  // Step 2: Convert binary data to hex
+  let hexString = "";
+  for (let i = 0; i < binaryString.length; i++) {
+    const hex = binaryString.charCodeAt(i).toString(16);
+    hexString += hex.length === 2 ? hex : "0" + hex;
+  }
+
+  return hexString;
 }

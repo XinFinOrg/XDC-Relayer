@@ -26,7 +26,7 @@ export interface FetchedV2BlockInfo {
   ParentHash: string;
   Number: number;
   Round: number;
-  HexRLP: string;
+  EncodedRLP: string;
   Error: string;
 }
 
