@@ -115,7 +115,7 @@ export class Processors {
     if (config.reverseRelayerCsc.isEnabled){
       const subnetSmartContractMode = await this.subnetService.Mode(); 
       switch (subnetSmartContractMode) {
-        case "reverse full":
+        case "reverse_full":
           modes.push(Mode.REVERSE_FULL);
           break;
         default:

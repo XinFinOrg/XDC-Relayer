@@ -275,7 +275,7 @@ export class SubnetService {
   }
 
 
-  async Mode(): Promise<"lite"| "full"| "reverse full"> {
+  async Mode(): Promise<"lite"| "full"| "reverse_full"> {
     try {
       return this.smartContractInstance.methods.MODE().call();
     } catch (error) {
