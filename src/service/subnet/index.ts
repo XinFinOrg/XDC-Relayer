@@ -93,7 +93,6 @@ export class SubnetService {
  
   async getLastCommittedBlockInfo(): Promise<SubnetBlockInfo> {
     try {
-      const x = await this.web3.xdcSubnet.getV2Block("committed");
       const { Hash, Number, Round, EncodedRLP, ParentHash } =
         // await this.web3.xdcSubnet.getV2Block("committed");
         await this.web3.xdcSubnet.getV2Block("latest");

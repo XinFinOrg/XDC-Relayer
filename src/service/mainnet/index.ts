@@ -131,7 +131,7 @@ export class MainnetService {
   }
 
   async submitTxsDynamic(results: Array<{ encodedRLP: string; blockNum: number }>): Promise<void> {
-    const blocksPerTx = [30, 5, 1];
+    const blocksPerTx = [30, 15, 5, 1];
     while (results.length) {
       let i = 0;
       while (i  < blocksPerTx.length){
