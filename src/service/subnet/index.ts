@@ -302,7 +302,7 @@ export class SubnetService {
   }
 
   async submitTxsDynamic(results: Array<{ encodedRLP: string; blockNum: number }>): Promise<void> {
-    const blocksPerTx = [5, 1];
+    const blocksPerTx = [20, 10, 5, 1];
     while (results.length) {
       let i = 0;
       while (i < blocksPerTx.length){
