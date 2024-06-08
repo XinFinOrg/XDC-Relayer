@@ -9,6 +9,7 @@ import { sleep } from "../../utils/index";
 import { subnetExtensions, Web3WithExtension } from "./extensions";
 import { NetworkInformation } from "../types";
 import FullABI from "./ABI/FullABI.json";
+import axios from "axios";
 
 const TRANSACTION_GAS_NUMBER = 12500000000;   //TODO: check this is different now?, is there better way to handle?
 
@@ -55,7 +56,41 @@ export class SubnetService {
   async getNetworkInformation(): Promise<NetworkInformation> {
     return this.web3.xdcSubnet.getNetworkInformation();
   }
-  
+
+   //bypassing web3 with axios here,  really hard to use batch web3 in version 1.8.2, maybe later we upgrade to 4.x.x and utilize web3 batch
+  async getCommittedBlockInfoBatch(startBlockNum: number, numToFetch: number): Promise<SubnetBlockInfo[]> {
+    const data = [];
+    const blockInfoList: SubnetBlockInfo[] = [];
+    for (let i = startBlockNum; i<startBlockNum+numToFetch;i++){
+      data.push({"jsonrpc":"2.0","method":"XDPoS_getV2BlockByNumber","params":[`0x${i.toString(16)}`],"id":1});
+    }
+    await axios.post(this.subnetConfig.url, data, {timeout: 10000}).then((response) => {
+      for (let i=0; i<response.data.length; i++){
+        const { Hash, Number, Round, EncodedRLP, ParentHash } = response.data[i].result;
+        if (!Hash || !Number || !EncodedRLP || !ParentHash) {
+          this.logger.error(
+            "Invalid block hash or height or encodedRlp or ParentHash received",
+            Hash,
+            Number,
+            EncodedRLP,
+            ParentHash
+          );
+          throw new Error("Unable to get committed block information by height from PARENTNET");
+        }
+        blockInfoList.push({
+          subnetBlockHash: Hash,
+          subnetBlockNumber: Number,
+          subnetBlockRound: Round,
+          encodedRLP: EncodedRLP,
+          parentHash: ParentHash,
+        });
+      }
+      }).catch((error) => {
+        this.logger.error("Axios Fetching Error:", error);
+      });
+    return blockInfoList;
+  }
+ 
   async getLastCommittedBlockInfo(): Promise<SubnetBlockInfo> {
     try {
       const x = await this.web3.xdcSubnet.getV2Block("committed");
@@ -171,14 +206,12 @@ export class SubnetService {
         (startingBlockNumber + numberOfBlocksToFetch - 1)
     );
     const rlpHeaders: Array<{ encodedRLP: string; blockNum: number }> = [];
-    for (
-      let i = startingBlockNumber;
-      i < startingBlockNumber + numberOfBlocksToFetch;
-      i++
-    ) {
-      const { encodedRLP } = await this.getCommittedBlockInfoByNum(i);
-      rlpHeaders.push({ encodedRLP, blockNum: i });
-      await sleep(this.subnetConfig.fetchWaitingTime);
+    const blockInfoList = await this.getCommittedBlockInfoBatch(startingBlockNumber, numberOfBlocksToFetch);
+    for (let i=0; i<blockInfoList.length;i++){
+      rlpHeaders.push({
+       encodedRLP: blockInfoList[i].encodedRLP,
+       blockNum: blockInfoList[i].subnetBlockNumber, 
+      });
     }
     return rlpHeaders;
   }
@@ -241,12 +274,7 @@ export class SubnetService {
   ): Promise<void> {
     try {
       if (!results.length) return;
-      this.logger.info(
-        `Submit the parentnet block from ${results[0].blockNum} to ${
-          results[results.length - 1].blockNum
-        } as tx into SUBNET`
-      );
-      const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); //old method for reference
+      const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex"));
       const transactionToBeSent =
         await this.smartContractInstance.methods.receiveHeader(encodedHexArray);
       const gas = await transactionToBeSent.estimateGas({
@@ -282,15 +310,14 @@ export class SubnetService {
         const val = blocksPerTx[i];
         if (results.length >= val){
           try{
-            this.logger.debug("submitDynamic startblock", results[0].blockNum, "pushing", val, "blocks", results.length, "remaining(inclusive)");
+            this.logger.info("submitDynamic startblock", results[0].blockNum, "pushing", val, "blocks,", results.length, "remaining(inclusive) into SUBNET");
             await this.submitTxs(results.slice(0, val));
             results = results.slice(val, results.length);
             break; //if push success, reset push size
-          } catch (error){
-            if (i < blocksPerTx.length){
-              i++;
-            }
-          }
+          } catch (error){}
+        }
+        if (i < blocksPerTx.length){
+          i++;
         }
       }
     }

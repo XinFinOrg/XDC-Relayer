@@ -10,6 +10,7 @@ import FullABI from "./ABI/FullABI.json";
 import LiteABI from "./ABI/LiteABI.json";
 import { Web3WithExtension, mainnetExtensions } from "./extensions";
 import { NetworkInformation } from "../types";
+import axios, { AxiosInstance } from "axios";
 
 const TRANSACTION_GAS_NUMBER = 12500000000;   //TODO: check this is different now?, is there better way to handle?
 
@@ -26,7 +27,6 @@ export interface SmartContractData {
   smartContractCommittedHeight: number;
   smartContractCommittedHash: string;
 }
-
 
 export class MainnetService {
   private web3: Web3WithExtension;
@@ -102,11 +102,6 @@ export class MainnetService {
   ): Promise<void> {
     try {
       if (!results.length) return;
-      this.logger.info(
-        `Submit the subnet block from ${results[0].blockNum} to ${
-        results[results.length - 1].blockNum
-        } as tx into PARENTNET`
-      );
       const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); 
       const transactionToBeSent =
         await this.smartContractInstance.methods.receiveHeader(encodedHexArray);
@@ -143,15 +138,14 @@ export class MainnetService {
         const val = blocksPerTx[i];
         if (results.length >= val){
           try{
-            this.logger.debug("submitDynamic startblock", results[0].blockNum, "pushing", val, "blocks", "remaining(inclusive)", results.length);
+            this.logger.info("submitDynamic startblock", results[0].blockNum, "pushing", val, "blocks,",results.length, "remaining(inclusive) into PARENTNET");
             await this.submitTxs(results.slice(0, val));
             results = results.slice(val, results.length);
             break; //if push success, reset push size
-          } catch (error){
-            if (i < blocksPerTx.length){
-              i++;
-            }
-          }
+          } catch (error){}
+        }
+        if (i < blocksPerTx.length){
+          i++;
         }
       }
     }
@@ -204,6 +198,40 @@ export class MainnetService {
     }
   }
 
+  //bypassing web3 with axios here,  really hard to use batch web3 in version 1.8.2, maybe later we upgrade to 4.x.x and utilize web3 batch
+  async getCommittedBlockInfoBatch(startBlockNum: number, numToFetch: number): Promise<MainnetBlockInfo[]> {
+    const data = [];
+    const blockInfoList: MainnetBlockInfo[] = [];
+    for (let i = startBlockNum; i<startBlockNum+numToFetch;i++){
+      data.push({"jsonrpc":"2.0","method":"XDPoS_getV2BlockByNumber","params":[`0x${i.toString(16)}`],"id":1});
+    }
+    await axios.post(this.mainnetConfig.url, data, {timeout: 10000}).then((response) => {
+      for (let i=0; i<response.data.length; i++){
+        const { Hash, Number, Round, EncodedRLP, ParentHash } = response.data[i].result;
+        if (!Hash || !Number || !EncodedRLP || !ParentHash) {
+          this.logger.error(
+            "Invalid block hash or height or encodedRlp or ParentHash received",
+            Hash,
+            Number,
+            EncodedRLP,
+            ParentHash
+          );
+          throw new Error("Unable to get committed block information by height from PARENTNET");
+        }
+        blockInfoList.push({
+          mainnetBlockHash: Hash,
+          mainnetBlockNumber: Number,
+          mainnetBlockRound: Round,
+          encodedRLP: EncodedRLP,
+          parentHash: ParentHash,
+        });
+      }
+      }).catch((error) => {
+        this.logger.error("Axios Fetching Error:", error);
+      });
+    return blockInfoList;
+  }
+
   async getLastCommittedBlockInfo(): Promise<MainnetBlockInfo> {
     try {
       const { Hash, Number, Round, EncodedRLP, ParentHash } =
@@ -245,14 +273,12 @@ export class MainnetService {
         (startingBlockNumber + numberOfBlocksToFetch - 1)
     );
     const rlpHeaders: Array<{ encodedRLP: string; blockNum: number }> = [];
-    for (
-      let i = startingBlockNumber;
-      i < startingBlockNumber + numberOfBlocksToFetch;
-      i++
-    ) {
-      const { encodedRLP } = await this.getCommittedBlockInfoByNum(i);
-      rlpHeaders.push({ encodedRLP, blockNum: i });
-      await sleep(this.mainnetConfig.fetchWaitingTime);
+    const blockInfoList = await this.getCommittedBlockInfoBatch(startingBlockNumber, numberOfBlocksToFetch);
+    for (let i=0; i<blockInfoList.length;i++){
+      rlpHeaders.push({
+       encodedRLP: blockInfoList[i].encodedRLP,
+       blockNum: blockInfoList[i].mainnetBlockNumber, 
+      });
     }
     return rlpHeaders;
   }
