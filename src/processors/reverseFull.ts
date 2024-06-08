@@ -84,7 +84,7 @@ export class ReverseFull extends BaseProcessor {
         startingBlockNumberToFetch,
         numOfBlocks
       );
-      await this.subnetService.submitTxs(results);
+      await this.subnetService.submitTxsDynamic(results);
       startingBlockNumberToFetch += numOfBlocks;
     }
     this.logger.info("Reverse Full CSC Sync completed!");

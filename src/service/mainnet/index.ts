@@ -103,8 +103,8 @@ export class MainnetService {
     try {
       if (!results.length) return;
       this.logger.info(
-        `Submit the subnet block up to ${
-          results[results.length - 1].blockNum
+        `Submit the subnet block from ${results[0].blockNum} to ${
+        results[results.length - 1].blockNum
         } as tx into PARENTNET`
       );
       const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); 
@@ -132,6 +132,28 @@ export class MainnetService {
         message: error.message,
       });
       throw error;
+    }
+  }
+
+  async submitTxsDynamic(results: Array<{ encodedRLP: string; blockNum: number }>): Promise<void> {
+    const blocksPerTx = [30, 5, 1];
+    while (results.length) {
+      let i = 0;
+      while (i  < blocksPerTx.length){
+        const val = blocksPerTx[i];
+        if (results.length >= val){
+          try{
+            this.logger.debug("submitDynamic startblock", results[0].blockNum, "pushing", val, "blocks", "remaining(inclusive)", results.length);
+            await this.submitTxs(results.slice(0, val));
+            results = results.slice(val, results.length);
+            break; //if push success, reset push size
+          } catch (error){
+            if (i < blocksPerTx.length){
+              i++;
+            }
+          }
+        }
+      }
     }
   }
 

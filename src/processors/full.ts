@@ -84,7 +84,7 @@ export class Full extends BaseProcessor {
         startingBlockNumberToFetch,
         numOfBlocks
       );
-      await this.mainnetService.submitTxs(results);
+      await this.mainnetService.submitTxsDynamic(results);
       startingBlockNumberToFetch += numOfBlocks;
     }
     this.logger.info("Full CSC Sync completed!");

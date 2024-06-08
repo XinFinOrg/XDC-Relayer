@@ -242,7 +242,7 @@ export class SubnetService {
     try {
       if (!results.length) return;
       this.logger.info(
-        `Submit the subnet block up to ${
+        `Submit the parentnet block from ${results[0].blockNum} to ${
           results[results.length - 1].blockNum
         } as tx into SUBNET`
       );
@@ -274,6 +274,27 @@ export class SubnetService {
     }
   }
 
+  async submitTxsDynamic(results: Array<{ encodedRLP: string; blockNum: number }>): Promise<void> {
+    const blocksPerTx = [5, 1];
+    while (results.length) {
+      let i = 0;
+      while (i < blocksPerTx.length){
+        const val = blocksPerTx[i];
+        if (results.length >= val){
+          try{
+            this.logger.debug("submitDynamic startblock", results[0].blockNum, "pushing", val, "blocks", results.length, "remaining(inclusive)");
+            await this.submitTxs(results.slice(0, val));
+            results = results.slice(val, results.length);
+            break; //if push success, reset push size
+          } catch (error){
+            if (i < blocksPerTx.length){
+              i++;
+            }
+          }
+        }
+      }
+    }
+  }
 
   async Mode(): Promise<"lite"| "full"| "reverse_full"> {
     try {
