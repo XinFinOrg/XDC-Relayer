@@ -109,7 +109,7 @@ const config: Config = {
         }
       : undefined,
   },
-  chunkSize : parseInt(process.env.MAX_FETCH_BLOCK_SIZE) || 30,
+  chunkSize : parseInt(process.env.MAX_FETCH_BLOCK_SIZE) || 120,
 };
 
 export { config };
