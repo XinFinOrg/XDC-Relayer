@@ -217,7 +217,7 @@ export class MainnetService {
     numberOfBlocksToFetch: number
   ): Promise<Array<{ encodedRLP: string; blockNum: number }>> {
     this.logger.info(
-      "Fetch subnet node data from " +
+      "Fetch parentnet node data from " +
         startingBlockNumber +
         " to " +
         (startingBlockNumber + numberOfBlocksToFetch - 1)

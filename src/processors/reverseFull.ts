@@ -30,7 +30,7 @@ export class ReverseFull extends BaseProcessor {
     //TODO: check CSC mode is correct at init
 
     this.queue.process(async (_, done) => {
-      this.logger.info("⏰ Executing normal flow periodically");
+      this.logger.info("⏰ Reverse Relayer: Executing normal flow periodically");
       try {
         done(null, await this.processEvent());
       } catch (error) {
@@ -87,7 +87,7 @@ export class ReverseFull extends BaseProcessor {
       await this.subnetService.submitTxs(results);
       startingBlockNumberToFetch += numOfBlocks;
     }
-    this.logger.info("Sync completed!");
+    this.logger.info("Reverse Full CSC Sync completed!");
     return;
   }
   

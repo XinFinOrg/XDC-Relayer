@@ -131,7 +131,7 @@ export class Lite extends BaseProcessor {
       scCommittedHeight = last.smartContractCommittedHeight;
       scHash = last.smartContractHash;
     }
-    this.logger.info("Sync completed!");
+    this.logger.info("Lite CSC Sync completed!");
     return;
   }
 }
