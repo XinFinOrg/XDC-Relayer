@@ -303,6 +303,14 @@ export class SubnetService {
 
   async submitTxsDynamic(results: Array<{ encodedRLP: string; blockNum: number }>): Promise<void> {
     const blocksPerTx = [20, 10, 5, 1];
+    //make 1 initial try, this is for when blocks are caught up
+    if (results.length < blocksPerTx[0]){
+      try{
+        this.logger.info("submitDynamic startblock", results[0].blockNum, "pushing", results.length, "blocks,",results.length, "remaining(inclusive) into SUBNET");
+        await this.submitTxs(results);
+        return;
+      } catch (error){}
+    }
     while (results.length) {
       let i = 0;
       while (i < blocksPerTx.length){
