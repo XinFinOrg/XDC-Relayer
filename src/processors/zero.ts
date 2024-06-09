@@ -72,7 +72,7 @@ export class Zero extends BaseProcessor {
             proof.txProofValues,
             proof.blockHash
           );
-          this.logger.info("sync zero index " + i + " success");
+          this.logger.info("Zero: sync index " + i + " success");
         }
       }
     }

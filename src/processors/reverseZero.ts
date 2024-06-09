@@ -1,5 +1,6 @@
 import bunyan from "bunyan";
 import { ZeroService } from "../service/zero";
+import { ReverseZeroService } from "../service/reverse_zero";
 import { config } from "../config";
 import { BaseProcessor } from "./base";
 
@@ -11,18 +12,18 @@ const REPEAT_JOB_OPT = {
 
 export class ReverseZero extends BaseProcessor {
   private logger: bunyan;
-  private zeroService: ZeroService;
+  private zeroService: ReverseZeroService;
 
   constructor(logger: bunyan) {
     super(NAME);
     this.logger = logger;
-    this.zeroService = new ZeroService(logger);
+    this.zeroService = new ReverseZeroService(logger);
   }
   init() {
     this.logger.info("Initialising Reverse XDC-Zero");
     this.zeroService.init();
     this.queue.process(async (_, done) => {
-      this.logger.info("⏰ Executing xdc-zero periodically");
+      this.logger.info("⏰ Executing reverse xdc-zero periodically");
       try {
         done(null, await this.processEvent());
       } catch (error) {
@@ -72,11 +73,11 @@ export class ReverseZero extends BaseProcessor {
             proof.txProofValues,
             proof.blockHash
           );
-          this.logger.info("sync zero index " + i + " success");
+          this.logger.info("Reverse Zero: sync index " + i + " success");
         }
       }
     }
-    const msg = `Completed the xdc-zero sync up till ${lastIndexFromSubnet} from subnet, wait for the next cycle`;
+    const msg = `Completed the reverse xdc-zero sync up till ${lastIndexFromSubnet} from parentnet, wait for the next cycle`;
     this.logger.info(msg);
     return msg;
   }
