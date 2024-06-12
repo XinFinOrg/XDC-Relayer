@@ -2,6 +2,7 @@ import bunyan from "bunyan";
 import { ZeroService } from "../service/zero";
 import { config } from "../config";
 import { BaseProcessor } from "./base";
+import { GenericZeroService } from "../service/generic_zero";
 
 export const NAME = "ZERO";
 const REPEAT_JOB_OPT = {
@@ -11,12 +12,12 @@ const REPEAT_JOB_OPT = {
 
 export class Zero extends BaseProcessor {
   private logger: bunyan;
-  private zeroService: ZeroService;
+  private zeroService: GenericZeroService;
 
   constructor(logger: bunyan) {
     super(NAME);
     this.logger = logger;
-    this.zeroService = new ZeroService(logger);
+    this.zeroService = new GenericZeroService(logger, "normal");
   }
   init() {
     this.logger.info("Initialising XDC-Zero");

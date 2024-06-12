@@ -3,6 +3,7 @@ import { ZeroService } from "../service/zero";
 import { ReverseZeroService } from "../service/reverse_zero";
 import { config } from "../config";
 import { BaseProcessor } from "./base";
+import { GenericZeroService } from "../service/generic_zero";
 
 export const NAME = "REVERSE-ZERO";
 const REPEAT_JOB_OPT = {
@@ -12,12 +13,12 @@ const REPEAT_JOB_OPT = {
 
 export class ReverseZero extends BaseProcessor {
   private logger: bunyan;
-  private zeroService: ReverseZeroService;
+  private zeroService: GenericZeroService;
 
   constructor(logger: bunyan) {
     super(NAME);
     this.logger = logger;
-    this.zeroService = new ReverseZeroService(logger);
+    this.zeroService = new GenericZeroService(logger, "reverse");
   }
   init() {
     this.logger.info("Initialising Reverse XDC-Zero");
