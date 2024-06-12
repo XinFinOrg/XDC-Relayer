@@ -5,7 +5,7 @@ import { config } from "../config";
 import { BaseProcessor } from "./base";
 import { GenericZeroService } from "../service/generic_zero";
 
-export const NAME = "REVERSE-ZERO";
+export const NAME = "REVERSE_ZERO";
 const REPEAT_JOB_OPT = {
   jobId: NAME,
   repeat: { cron: config.cronJob.zeroJobExpression },

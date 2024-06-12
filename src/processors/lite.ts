@@ -22,7 +22,6 @@ export class Lite extends BaseProcessor {
   
   init() {
     this.logger.info("Initialising XDC Lite relayer");
-    //TODO: check CSC mode is correct at init
 
     this.queue.process(async (_, done) => {
       this.logger.info("⏰ Executing lite flow periodically");

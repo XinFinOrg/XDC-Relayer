@@ -36,9 +36,9 @@ export class ZeroService {
 
   // Initialise the client services
   async init() {
-    if (config.xdcZero.walletPk) {
+    if (config.xdcZero.parentnetWalletPk) {
       this.parentChainWalletAccount = privateKeyToAccount(
-        config.xdcZero.walletPk as Hex
+        config.xdcZero.parentnetWalletPk as Hex
       );
     }
 

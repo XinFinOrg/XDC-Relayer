@@ -55,7 +55,7 @@ export class GenericZeroService {
       this.parentnetCSCAddress = config.mainnet.smartContractAddress;
       this.subnetZeroAddress = config.xdcZero.subnetZeroContractAddress;
       this.parentnetZeroAddress = config.xdcZero.parentChainZeroContractAddress;
-      this.parentnetWalletAccount = privateKeyToAccount(config.xdcZero.subnetWalletPk as Hex);
+      this.parentnetWalletAccount = privateKeyToAccount(config.xdcZero.parentnetWalletPk as Hex);
     }
   }
 

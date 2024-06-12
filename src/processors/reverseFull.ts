@@ -7,7 +7,7 @@ import { ForkingError } from "../errors/forkingError";
 import { BaseProcessor } from "./base";
 
 const chunkByMaxFetchSize = chunkBy(config.chunkSize);
-export const NAME = "REVERSE-FULL";
+export const NAME = "REVERSE_FULL";
 const REPEAT_JOB_OPT = { jobId: NAME, repeat: { cron: config.cronJob.jobExpression}};
 export class ReverseFull extends BaseProcessor {
   private mainnetService: MainnetService;
@@ -27,7 +27,6 @@ export class ReverseFull extends BaseProcessor {
   
   init() {
     this.logger.info("Initialising Reverse XDC relayer");
-    //TODO: check CSC mode is correct at init
 
     this.queue.process(async (_, done) => {
       this.logger.info("⏰ Reverse Relayer: Executing normal flow periodically");
@@ -200,9 +199,7 @@ export class ReverseFull extends BaseProcessor {
     heightToSearchFrom: number
   ): Promise<{ divergingHeight: number; divergingHash: string }> {
     let currentHeight = heightToSearchFrom;
-    // let mainnetHash: string;
     let subnetHash: string;
-    // let subnetBlockInfo: SubnetBlockInfo;
     let mainnetBlockInfo: MainnetBlockInfo;
   
     while (currentHeight > 0) {

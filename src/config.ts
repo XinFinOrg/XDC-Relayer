@@ -27,7 +27,7 @@ export interface XdcZeroConfig {
   isEnabled: boolean;
   subnetZeroContractAddress?: string;
   parentChainZeroContractAddress?: string;
-  walletPk?: string;
+  parentnetWalletPk?: string;
   subnetWalletPk?: string;
 }
 
@@ -62,7 +62,7 @@ const getZeroConfig = (): XdcZeroConfig => {
     isEnabled,
     subnetZeroContractAddress: process.env.SUBNET_ZERO_CONTRACT,
     parentChainZeroContractAddress: process.env.PARENTNET_ZERO_CONTRACT,
-    walletPk: process.env.PARENTNET_ZERO_WALLET_PK.startsWith("0x") ? process.env.PARENTNET_ZERO_WALLET_PK : `0x${process.env.PARENTNET_ZERO_WALLET_PK}`,
+    parentnetWalletPk: process.env.PARENTNET_ZERO_WALLET_PK.startsWith("0x") ? process.env.PARENTNET_ZERO_WALLET_PK : `0x${process.env.PARENTNET_ZERO_WALLET_PK}`,
     subnetWalletPk: process.env.SUBNET_WALLET_PK.startsWith("0x") ? process.env.SUBNET_WALLET_PK : `0x${process.env.SUBNET_WALLET_PK}`
   }: { isEnabled: false };
 };

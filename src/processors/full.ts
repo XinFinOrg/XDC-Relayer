@@ -27,7 +27,6 @@ export class Full extends BaseProcessor {
   
   init() {
     this.logger.info("Initialising XDC relayer");
-    //TODO: check CSC mode is correct at init
     
     this.queue.process(async (_, done) => {
       this.logger.info("⏰ Full Relayer: Executing normal flow periodically");
