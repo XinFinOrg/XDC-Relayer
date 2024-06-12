@@ -45,10 +45,10 @@ export interface Config {
   notification: NotificationConfig;
   chunkSize: number;
   xdcZero: XdcZeroConfig;
-  relayerCsc: {
+  relayerCsc: {   //Checkpoint Smart Contract is deployed on the Parentnet and stores Subnet data, check https://github.com/XinFinOrg/XDC-CSC
     isEnabled: boolean;
   }
-  reverseRelayerCsc:{
+  reverseRelayerCsc:{ //Reverse Checkpoint Smart Contract is deployed in the Subnet and stores Parentnet data, check https://github.com/XinFinOrg/XDC-CSC
     isEnabled: boolean;
   }
 }
