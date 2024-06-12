@@ -18,32 +18,51 @@ import Logger from "bunyan";
 import { privateKeyToAccount } from "viem/accounts";
 
 // This class must be called with init() in order to use it
+
+//Parentnet = chain where zero contract is deployed
+//Childnet = chain where data transfer is initiated
+// Zero triggers once in a while to to check if there is zero-requests in childnet then store that info into parentnet zero contract
 export class ZeroService {
-  private subnetViemClient: PublicClient;
-  private mainnetViemClient: PublicClient;
-  private mainnetWalletClient: WalletClient;
-  private subnetService: SubnetService;
-  private mainnetService: MainnetService;
+  private childnetViemClient: PublicClient;
+  private parentnetViemClient: PublicClient;
+  private parentnetWalletClient: WalletClient;
+  private childnetService: SubnetService;
+  private parentnetService: MainnetService;
   private logger: Logger;
+  private parentnetWalletAccount: PrivateKeyAccount;
+  private childnetUrl: string;
+  private parentnetUrl: string;
+  private subnetZeroAddress: string;
+  private parentnetZeroAddress: string;
+  private parentnetCSCAddress: string;
 
-  private parentChainWalletAccount: PrivateKeyAccount;
-
-  constructor(logger: bunyan) {
-    this.subnetService = new SubnetService(config.subnet, logger);
-    this.mainnetService = new MainnetService(config.mainnet, logger);
+  constructor(logger: bunyan, mode: "reverse" | string ) {
     this.logger = logger;
+    if (mode == "reverse"){
+      this.childnetService = new SubnetService(config.mainnet, logger);
+      this.parentnetService = new MainnetService(config.subnet, logger);
+      this.childnetUrl = config.mainnet.url;
+      this.parentnetUrl = config.subnet.url;
+      this.parentnetCSCAddress = config.subnet.smartContractAddress;
+      this.subnetZeroAddress = config.xdcZero.parentChainZeroContractAddress;
+      this.parentnetZeroAddress = config.xdcZero.subnetZeroContractAddress;
+      this.parentnetWalletAccount = privateKeyToAccount(config.xdcZero.subnetWalletPk as Hex);
+    } else {
+      this.childnetService = new SubnetService(config.subnet, logger);
+      this.parentnetService = new MainnetService(config.mainnet, logger);
+      this.childnetUrl = config.subnet.url;
+      this.parentnetUrl = config.mainnet.url;
+      this.parentnetCSCAddress = config.mainnet.smartContractAddress;
+      this.subnetZeroAddress = config.xdcZero.subnetZeroContractAddress;
+      this.parentnetZeroAddress = config.xdcZero.parentChainZeroContractAddress;
+      this.parentnetWalletAccount = privateKeyToAccount(config.xdcZero.parentnetWalletPk as Hex);
+    }
   }
 
   // Initialise the client services
   async init() {
-    if (config.xdcZero.parentnetWalletPk) {
-      this.parentChainWalletAccount = privateKeyToAccount(
-        config.xdcZero.parentnetWalletPk as Hex
-      );
-    }
-
     const subnetNetworkInformation =
-      await this.subnetService.getNetworkInformation();
+      await this.childnetService.getNetworkInformation();
     const subnetInfo = {
       id: subnetNetworkInformation.NetworkId,
       name: subnetNetworkInformation.NetworkName,
@@ -54,18 +73,18 @@ export class ZeroService {
         symbol: subnetNetworkInformation.Denom,
       },
       rpcUrls: {
-        public: { http: [config.subnet.url] },
-        default: { http: [config.subnet.url] },
+        public: { http: [this.childnetUrl]},
+        default: { http: [this.childnetUrl] },
       },
     };
 
-    this.subnetViemClient = createPublicClient({
+    this.childnetViemClient = createPublicClient({
       chain: subnetInfo,
       transport: http(),
     });
 
     const mainnetNetworkInformation =
-      await this.mainnetService.getNetworkInformation();
+      await this.parentnetService.getNetworkInformation();
     const mainnetInfo = {
       id: mainnetNetworkInformation.NetworkId,
       name: mainnetNetworkInformation.NetworkName,
@@ -76,18 +95,18 @@ export class ZeroService {
         symbol: mainnetNetworkInformation.Denom,
       },
       rpcUrls: {
-        public: { http: [config.mainnet.url] },
-        default: { http: [config.mainnet.url] },
+        public: { http: [this.parentnetUrl] },
+        default: { http: [this.parentnetUrl] },
       },
     };
 
-    this.mainnetViemClient = createPublicClient({
+    this.parentnetViemClient = createPublicClient({
       chain: mainnetInfo,
       transport: http(),
     });
 
-    this.mainnetWalletClient = createWalletClient({
-      account: this.parentChainWalletAccount,
+    this.parentnetWalletClient = createWalletClient({
+      account: this.parentnetWalletAccount,
       chain: mainnetInfo,
       transport: http(),
     });
@@ -96,17 +115,18 @@ export class ZeroService {
   async getPayloads() {
     const payloads = [] as any;
     const subnetEndpointContract = {
-      address: config.xdcZero.subnetZeroContractAddress,
+      // address: config.xdcZero.subnetZeroContractAddress,
+      address: this.subnetZeroAddress,
       abi: endpointABI,
     };
 
-    const logs = await this.subnetViemClient.getContractEvents({
+    const logs = await this.childnetViemClient.getContractEvents({
       ...(subnetEndpointContract as any),
       fromBlock: BigInt(0),
       eventName: "Packet",
     });
 
-    const parentChainId = await this.mainnetViemClient.getChainId();
+    const parentChainId = await this.parentnetViemClient.getChainId();
 
     logs?.forEach((log) => {
       const values = decodeAbiParameters(
@@ -133,12 +153,13 @@ export class ZeroService {
   }
 
   async getIndexFromParentnet() {
-    const subnetChainId = await this.subnetViemClient.getChainId();
+    const subnetChainId = await this.childnetViemClient.getChainId();
     const parentnetEndpointContract = {
-      address: config.xdcZero.parentChainZeroContractAddress,
+      // address: config.xdcZero.parentChainZeroContractAddress,
+      address: this.parentnetZeroAddress,
       abi: endpointABI,
     };
-    const chain = (await this.mainnetViemClient.readContract({
+    const chain = (await this.parentnetViemClient.readContract({
       ...(parentnetEndpointContract as any),
       functionName: "getChain",
       args: [subnetChainId],
@@ -149,10 +170,11 @@ export class ZeroService {
 
   async getLatestBlockNumberFromCsc() {
     const parentnetCSCContract = {
-      address: config.mainnet.smartContractAddress,
+      // address: config.mainnet.smartContractAddress,
+      address: this.parentnetCSCAddress,
       abi: cscABI,
     };
-    const blocks = (await this.mainnetViemClient.readContract({
+    const blocks = (await this.parentnetViemClient.readContract({
       ...(parentnetCSCContract as any),
       functionName: "getLatestBlocks",
       args: [],
@@ -162,7 +184,7 @@ export class ZeroService {
   }
 
   async getProof(txHash: string) {
-    return this.subnetService.getTransactionAndReceiptProof(txHash);
+    return this.childnetService.getTransactionAndReceiptProof(txHash);
   }
 
   async validateTransactionProof(
@@ -172,18 +194,19 @@ export class ZeroService {
     blockhash: string
   ) {
     const parentnetEndpointContract = {
-      address: config.xdcZero.parentChainZeroContractAddress,
+      // address: config.xdcZero.parentChainZeroContractAddress,
+      address: this.parentnetZeroAddress,
       abi: endpointABI,
     };
-    const subnetChainId = await this.subnetViemClient.getChainId();
-    const { request } = await this.mainnetViemClient.simulateContract({
+    const subnetChainId = await this.childnetViemClient.getChainId();
+    const { request } = await this.parentnetViemClient.simulateContract({
       ...(parentnetEndpointContract as any),
       functionName: "validateTransactionProof",
       args: [subnetChainId, key, receiptProof, transactionProof, blockhash],
-      account: this.parentChainWalletAccount,
+      account: this.parentnetWalletAccount,
     });
 
-    const tx = await this.mainnetWalletClient.writeContract(request as any);
+    const tx = await this.parentnetWalletClient.writeContract(request as any);
     this.logger.info(tx);
   }
 }
