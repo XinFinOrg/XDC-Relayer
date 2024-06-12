@@ -237,7 +237,7 @@ export class MainnetService {
         });
       }
       }).catch((error) => {
-        this.logger.error("Axios Fetching Error:", error);
+        this.logger.error("Axios Parentnet Fetching Error:", error);
         throw error;
       });
     return blockInfoList;

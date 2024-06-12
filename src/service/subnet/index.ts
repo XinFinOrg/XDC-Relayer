@@ -86,7 +86,7 @@ export class SubnetService {
         });
       }
       }).catch((error) => {
-        this.logger.error("Axios Fetching Error:", error);
+        this.logger.error("Axios Subnet Fetching Error:", error);
         throw error;
       });
     return blockInfoList;
