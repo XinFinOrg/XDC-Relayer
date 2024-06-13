@@ -17,11 +17,12 @@ export class Lite extends BaseProcessor {
     super(NAME);
     this.logger = logger;
     this.liteMainnetService = new LiteMainnetService(config.mainnet, logger);
-    this.subnetService = new SubnetService(config.subnet, logger);
+    // this.subnetService = new SubnetService(config.subnet, logger);
   }
   
   init() {
     this.logger.info("Initialising XDC Lite relayer");
+
     this.queue.process(async (_, done) => {
       this.logger.info("⏰ Executing lite flow periodically");
       try {
@@ -101,7 +102,7 @@ export class Lite extends BaseProcessor {
         await this.liteMainnetService.commitHeader(
           scHash,
           results.map((item) => {
-            return "0x" + item.hexRLP;
+            return "0x" + item.encodedRLP;
           })
         );
       } else {
@@ -129,7 +130,7 @@ export class Lite extends BaseProcessor {
       scCommittedHeight = last.smartContractCommittedHeight;
       scHash = last.smartContractHash;
     }
-    this.logger.info("Sync completed!");
+    this.logger.info("Lite CSC Sync completed!");
     return;
   }
 }

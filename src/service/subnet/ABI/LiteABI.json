@@ -1,0 +1,364 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "initialValidatorSet",
+        "type": "address[]"
+      },
+      {
+        "internalType": "bytes",
+        "name": "block1",
+        "type": "bytes"
+      },
+      {
+        "internalType": "uint64",
+        "name": "initGap",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint64",
+        "name": "initEpoch",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "blockHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "number",
+        "type": "uint64"
+      }
+    ],
+    "name": "SubnetEpochBlockAccepted",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "INIT_EPOCH",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "INIT_GAP",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MODE",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "epochHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "headers",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "commitHeader",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "number",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "headers",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "commitHeaderByNumber",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "epochNum",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "idx",
+        "type": "uint256"
+      }
+    ],
+    "name": "getCurrentEpochBlockByIndex",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "number",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "roundNum",
+            "type": "uint64"
+          },
+          {
+            "internalType": "int64",
+            "name": "mainnetNum",
+            "type": "int64"
+          }
+        ],
+        "internalType": "struct LiteCheckpoint.HeaderInfo",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getCurrentValidators",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address[]",
+            "name": "set",
+            "type": "address[]"
+          },
+          {
+            "internalType": "int256",
+            "name": "threshold",
+            "type": "int256"
+          }
+        ],
+        "internalType": "struct LiteCheckpoint.Validators",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "blockHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getHeader",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "number",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "roundNum",
+            "type": "uint64"
+          },
+          {
+            "internalType": "int64",
+            "name": "mainnetNum",
+            "type": "int64"
+          }
+        ],
+        "internalType": "struct LiteCheckpoint.HeaderInfo",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "number",
+        "type": "uint256"
+      }
+    ],
+    "name": "getHeaderByNumber",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "number",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "roundNum",
+            "type": "uint64"
+          },
+          {
+            "internalType": "int64",
+            "name": "mainnetNum",
+            "type": "int64"
+          }
+        ],
+        "internalType": "struct LiteCheckpoint.HeaderInfo",
+        "name": "",
+        "type": "tuple"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getLatestBlocks",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "blockHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "number",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct LiteCheckpoint.BlockLite",
+        "name": "",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "blockHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "number",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct LiteCheckpoint.BlockLite",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "blockHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getUnCommittedHeader",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "sequence",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "lastRoundNum",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "lastNum",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct LiteCheckpoint.UnCommittedHeaderInfo",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes[]",
+        "name": "headers",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "receiveHeader",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

@@ -3,30 +3,30 @@ import { ZeroService } from "../service/zero/index";
 import { config } from "../config";
 import { BaseProcessor } from "./base";
 
-export const NAME = "ZERO";
+export const NAME = "REVERSE_ZERO";
 const REPEAT_JOB_OPT = {
   jobId: NAME,
   repeat: { cron: config.cronJob.zeroJobExpression },
 };
 
-export class Zero extends BaseProcessor {
+export class ReverseZero extends BaseProcessor {
   private logger: bunyan;
   private zeroService: ZeroService;
 
   constructor(logger: bunyan) {
     super(NAME);
     this.logger = logger;
-    this.zeroService = new ZeroService(logger, "normal");
+    this.zeroService = new ZeroService(logger, "reverse");
   }
   init() {
-    this.logger.info("Initialising XDC-Zero");
+    this.logger.info("Initialising Reverse XDC-Zero");
     this.zeroService.init();
     this.queue.process(async (_, done) => {
-      this.logger.info("⏰ Executing xdc-zero periodically");
+      this.logger.info("⏰ Executing reverse xdc-zero periodically");
       try {
         done(null, await this.processEvent());
       } catch (error) {
-        this.logger.error("Fail to process xdc-zero job", {
+        this.logger.error("Fail to process reverse xdc-zero job", {
           message: error.message,
         });
         // Report the error
@@ -44,7 +44,7 @@ export class Zero extends BaseProcessor {
   async processEvent() {
     const payloads = await this.zeroService.getPayloads();
     if (payloads.length == 0) {
-      const msg = "Nothing to process in xdc-zero, wait for the next event log";
+      const msg = "Nothing to process in reverse xdc-zero, wait for the next event log";
       this.logger.info(msg);
       return msg;
     }
@@ -72,11 +72,11 @@ export class Zero extends BaseProcessor {
             proof.txProofValues,
             proof.blockHash
           );
-          this.logger.info("Zero: sync index " + i + " success");
+          this.logger.info("Reverse Zero: sync index " + i + " success");
         }
       }
     }
-    const msg = `Completed the xdc-zero sync up till ${lastIndexFromSubnet} from subnet, wait for the next cycle`;
+    const msg = `Completed the reverse xdc-zero sync up till ${lastIndexFromSubnet} from parentnet, wait for the next cycle`;
     this.logger.info(msg);
     return msg;
   }

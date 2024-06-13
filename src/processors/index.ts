@@ -4,16 +4,21 @@ import { createBullBoard } from '@bull-board/api';
 import { BullAdapter } from '@bull-board/api/bullAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 
-import { Zero, NAME as zeroName } from "./zero";
 import { config } from "./../config";
 import { Lite, NAME as liteName } from "./lite";
 import { Full, NAME as fullName } from "./full";
+import { ReverseFull, NAME as ReverseFullName } from "./reverseFull";
+import { Zero, NAME as zeroName } from "./zero";
+import { ReverseZero, NAME as ReverseZeroName } from "./reverseZero";
 import { MainnetService } from "../service/mainnet";
+import { SubnetService } from "../service/subnet";
 
 enum Mode {
   LITE = liteName,
   FULL = fullName,
-  ZERO = zeroName
+  REVERSE_FULL = ReverseFullName,
+  ZERO = zeroName,
+  REVERSE_ZERO = ReverseZeroName
 }
 
 export class Processors {
@@ -21,19 +26,25 @@ export class Processors {
   private processors: {
     lite: Lite;
     full: Full;
+    reverseFull: ReverseFull;
     zero: Zero;
+    reverseZero: ReverseZero;
   }
   private mainnetService: MainnetService;
+  private subnetService: SubnetService;
   
   constructor(logger: bunyan) {
     this.logger = logger;
     this.processors = {
       lite: new Lite(logger),
       full: new Full(logger),
-      zero: new Zero(logger)
+      reverseFull: new ReverseFull(logger),
+      zero: new Zero(logger),
+      reverseZero: new ReverseZero(logger),
       // Register more processors here
     };
     this.mainnetService = new MainnetService(config.mainnet, logger);
+    this.subnetService = new SubnetService(config.subnet, logger);
   }
   
   // Register the event process. NOTE: this won't actually start the job processing until you call the reset
@@ -71,8 +82,14 @@ export class Processors {
         case Mode.FULL:
           await this.processors.full.reset();
           break;
+        case Mode.REVERSE_FULL:
+          await this.processors.reverseFull.reset();
+          break;
         case Mode.ZERO:
           await this.processors.zero.reset();
+          break;
+        case Mode.REVERSE_ZERO:
+          await this.processors.reverseZero.reset();
           break;
         default:
           throw new Error("No avaiable modes to choose from");
@@ -92,12 +109,23 @@ export class Processors {
           modes.push(Mode.FULL);
           break;
         default:
-          throw new Error("No avaiable mode from mainnet smart contract API");
+          throw new Error("No avaiable mode from PARENTNET smart contract API");
+      }
+    }
+    if (config.reverseRelayerCsc.isEnabled){
+      const subnetSmartContractMode = await this.subnetService.Mode(); 
+      switch (subnetSmartContractMode) {
+        case "reverse_full":
+          modes.push(Mode.REVERSE_FULL);
+          break;
+        default:
+          throw new Error("No available mode from SUBNET smart contract API");
       }
     }
     
     if (config.xdcZero.isEnabled) {
       modes.push(Mode.ZERO);
+      modes.push(Mode.REVERSE_ZERO);
     }
     
     this.logger.info("Running modes: ", modes);
