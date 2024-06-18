@@ -326,6 +326,7 @@ export class SubnetService {
         }
         if (i < blocksPerTx.length){
           i++;
+          await sleep(3000);
         }
       }
     }

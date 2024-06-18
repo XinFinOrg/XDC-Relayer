@@ -156,6 +156,7 @@ export class MainnetService {
         }
         if (i < blocksPerTx.length){
           i++;
+          await sleep(3000);
         }
       }
     }
