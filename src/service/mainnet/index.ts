@@ -134,11 +134,9 @@ export class MainnetService {
     const blocksPerTx = [30, 15, 5, 1];
     //make 1 initial try, this is for when blocks are caught up
     if (results.length < blocksPerTx[0]){
-      try{
         this.logger.info("submitDynamic startblock", results[0].blockNum, "pushing", results.length, "blocks,",results.length, "remaining(inclusive) into PARENTNET");
         await this.submitTxs(results);
         return;
-      } catch (error){}
     }
     
     //loop while reducing tx size
@@ -147,17 +145,13 @@ export class MainnetService {
       while (i  < blocksPerTx.length){
         const val = blocksPerTx[i];
         if (results.length >= val){
-          try{
             this.logger.info("submitDynamic startblock", results[0].blockNum, "pushing", val, "blocks,",results.length, "remaining(inclusive) into PARENTNET");
             await this.submitTxs(results.slice(0, val));
             results = results.slice(val, results.length);
             break; //if push success, reset push size
-          } catch (error){}
         }
-        if (i < blocksPerTx.length){
-          i++;
-          await sleep(3000);
-        }
+        i++;
+        await sleep(3000);
       }
     }
   }
