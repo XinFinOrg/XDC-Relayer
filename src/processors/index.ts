@@ -125,6 +125,9 @@ export class Processors {
     
     if (config.xdcZero.isEnabled) {
       modes.push(Mode.ZERO);
+    }
+
+    if (config.xdcZero.isReverseEnabled){
       modes.push(Mode.REVERSE_ZERO);
     }
     
