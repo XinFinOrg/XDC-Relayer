@@ -43,19 +43,23 @@ export class ZeroService {
       this.parentnetService = new MainnetService(config.subnet, logger);
       this.childnetUrl = config.mainnet.url;
       this.parentnetUrl = config.subnet.url;
-      this.parentnetCSCAddress = config.subnet.smartContractAddress;
-      this.subnetZeroAddress = config.xdcZero.parentChainZeroContractAddress;
-      this.parentnetZeroAddress = config.xdcZero.subnetZeroContractAddress;
-      this.parentnetWalletAccount = privateKeyToAccount(config.xdcZero.subnetWalletPk as Hex);
+      if (config.xdcZero.isReverseEnabled){
+        this.parentnetCSCAddress = config.subnet.smartContractAddress;
+        this.subnetZeroAddress = config.xdcZero.parentChainZeroContractAddress;
+        this.parentnetZeroAddress = config.xdcZero.subnetZeroContractAddress;
+        this.parentnetWalletAccount = privateKeyToAccount(config.xdcZero.subnetWalletPk as Hex);
+      }
     } else {
       this.childnetService = new SubnetService(config.subnet, logger);
       this.parentnetService = new MainnetService(config.mainnet, logger);
       this.childnetUrl = config.subnet.url;
       this.parentnetUrl = config.mainnet.url;
-      this.parentnetCSCAddress = config.mainnet.smartContractAddress;
-      this.subnetZeroAddress = config.xdcZero.subnetZeroContractAddress;
-      this.parentnetZeroAddress = config.xdcZero.parentChainZeroContractAddress;
-      this.parentnetWalletAccount = privateKeyToAccount(config.xdcZero.parentnetWalletPk as Hex);
+      if (config.xdcZero.isEnabled){
+        this.parentnetCSCAddress = config.mainnet.smartContractAddress;
+        this.subnetZeroAddress = config.xdcZero.subnetZeroContractAddress;
+        this.parentnetZeroAddress = config.xdcZero.parentChainZeroContractAddress;
+        this.parentnetWalletAccount = privateKeyToAccount(config.xdcZero.parentnetWalletPk as Hex);
+      }
     }
   }
 

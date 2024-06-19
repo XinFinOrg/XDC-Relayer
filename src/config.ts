@@ -25,6 +25,7 @@ export interface NotificationConfig {
 
 export interface XdcZeroConfig {
   isEnabled: boolean;
+  isReverseEnabled: boolean;
   subnetZeroContractAddress?: string;
   parentChainZeroContractAddress?: string;
   parentnetWalletPk?: string;
@@ -57,14 +58,37 @@ const environment = process.env.NODE_ENV || "production";
 export const devMode = environment != "production";
 
 const getZeroConfig = (): XdcZeroConfig => {
-  const isEnabled: boolean = "PARENTNET_ZERO_WALLET_PK" in process.env && "SUBNET_ZERO_WALLET_PK" in process.env && "SUBNET_ZERO_CONTRACT" in process.env && "PARENTNET_ZERO_CONTRACT" in process.env;
-  return isEnabled ? {
+  const reqXdcZero = [
+    "PARENTNET_ZERO_CONTRACT",
+    "SUBNET_ZERO_CONTRACT",
+    "PARENTNET_ZERO_WALLET_PK",
+    "CHECKPOINT_CONTRACT"
+  ];
+  const reqReverseXdcZero = [
+    "PARENTNET_ZERO_CONTRACT",
+    "SUBNET_ZERO_CONTRACT",
+    "SUBNET_ZERO_WALLET_PK",
+    "REVERSE_CHECKPOINT_CONTRACT"
+  ];
+  const isEnabled = reqXdcZero.every(envVar => envVar in process.env);
+  const isReverseEnabled = reqReverseXdcZero.every(envVar => envVar in process.env);
+
+  let parentnetWalletPk = "";
+  if (isEnabled){
+    parentnetWalletPk = process.env.PARENTNET_ZERO_WALLET_PK.startsWith("0x") ? process.env.PARENTNET_ZERO_WALLET_PK : `0x${process.env.PARENTNET_ZERO_WALLET_PK}`;
+  }
+  let subnetWalletPk = "";
+  if (isReverseEnabled){
+    subnetWalletPk = process.env.SUBNET_ZERO_WALLET_PK.startsWith("0x") ? process.env.SUBNET_ZERO_WALLET_PK : `0x${process.env.SUBNET_WALLET_PK}`;
+  }
+  return {
     isEnabled,
+    isReverseEnabled,
     subnetZeroContractAddress: process.env.SUBNET_ZERO_CONTRACT,
+    subnetWalletPk: subnetWalletPk,
     parentChainZeroContractAddress: process.env.PARENTNET_ZERO_CONTRACT,
-    parentnetWalletPk: process.env.PARENTNET_ZERO_WALLET_PK.startsWith("0x") ? process.env.PARENTNET_ZERO_WALLET_PK : `0x${process.env.PARENTNET_ZERO_WALLET_PK}`,
-    subnetWalletPk: process.env.SUBNET_WALLET_PK.startsWith("0x") ? process.env.SUBNET_WALLET_PK : `0x${process.env.SUBNET_WALLET_PK}`
-  }: { isEnabled: false };
+    parentnetWalletPk:  parentnetWalletPk,
+  };
 };
 
 const config: Config = {
