@@ -131,7 +131,7 @@ export class MainnetService {
   }
 
   async submitTxsDynamic(results: Array<{ encodedRLP: string; blockNum: number }>): Promise<void> {
-    const blocksPerTx = [30, 15, 5, 1];
+    const blocksPerTx = [20, 10, 5, 1];
     //make 1 initial try, this is for when blocks are caught up
     if (results.length < blocksPerTx[0]){
       try{
@@ -141,6 +141,7 @@ export class MainnetService {
       } catch (error){}
     }
     
+    let errorCount = 0;
     //loop while reducing tx size
     while (results.length) {
       let i = 0;
@@ -152,12 +153,17 @@ export class MainnetService {
             await this.submitTxs(results.slice(0, val));
             results = results.slice(val, results.length);
             break; //if push success, reset push size
-          } catch (error){}
+          } catch (error){
+            errorCount++;
+            if (errorCount > 10){
+              throw Error("submitDynamic failed 10X times, reset relayer process");
+            }
+          }
         }
-        if (i < blocksPerTx.length){
+        if (i < blocksPerTx.length - 1){
           i++;
-          await sleep(3000);
         }
+        await sleep(3000);
       }
     }
   }

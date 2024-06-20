@@ -312,6 +312,8 @@ export class SubnetService {
         return;
       } catch (error){}
     }
+
+    let errorCount = 0;
     while (results.length) {
       let i = 0;
       while (i < blocksPerTx.length){
@@ -322,12 +324,17 @@ export class SubnetService {
             await this.submitTxs(results.slice(0, val));
             results = results.slice(val, results.length);
             break; //if push success, reset push size
-          } catch (error){}
+          } catch (error){
+            errorCount++;
+            if (errorCount > 10){
+              throw Error("submitDynamic failed 10X times, reset relayer process");
+            }
+          }
         }
-        if (i < blocksPerTx.length){
+        if (i < blocksPerTx.length-1){
           i++;
-          await sleep(3000);
         }
+        await sleep(3000);
       }
     }
   }
