@@ -36,23 +36,21 @@ export class ReverseZero extends BaseProcessor {
     });
     return this;
   }
-  
+
   async reset(): Promise<void> {
     await this.queue.add({}, REPEAT_JOB_OPT);
   }
-  
+
   async processEvent() {
     const payloads = await this.zeroService.getPayloads();
     if (payloads.length == 0) {
-      const msg = "Nothing to process in reverse xdc-zero, wait for the next event log";
+      const msg =
+        "Nothing to process in reverse xdc-zero, wait for the next event log";
       this.logger.info(msg);
       return msg;
     }
     const lastPayload = payloads[payloads.length - 1];
     const lastIndexFromSubnet = lastPayload[0];
-
-    const lastIndexfromParentnet =
-      await this.zeroService.getIndexFromParentnet();
 
     const lastBlockNumber = lastPayload[7];
     const cscBlockNumber = await this.zeroService.getLatestBlockNumberFromCsc();
@@ -61,21 +59,26 @@ export class ReverseZero extends BaseProcessor {
       this.logger.info(msg);
       return msg;
     }
+    const subnetChainId = await this.zeroService.getSubnetChainId();
 
-    if (lastIndexFromSubnet > lastIndexfromParentnet) {
-      for (let i = lastIndexfromParentnet; i < lastIndexFromSubnet; i++) {
-        if (payloads?.[i]?.[6]) {
-          const proof = await this.zeroService.getProof(payloads[i][6]);
-          await this.zeroService.validateTransactionProof(
-            proof.key,
-            proof.receiptProofValues,
-            proof.txProofValues,
-            proof.blockHash
-          );
-          this.logger.info("Reverse Zero: sync index " + i + " success");
-        }
+    for (let i = 1; i <= lastIndexFromSubnet; i++) {
+      const used = await this.zeroService.checkIndexUsed(subnetChainId, i);
+      console.log("index", i, " used ", used);
+
+      const payload = payloads?.[i - 1];
+      const transactionHash = payload?.[6];
+      if (!used && transactionHash) {
+        const proof = await this.zeroService.getProof(transactionHash);
+        await this.zeroService.validateTransactionProof(
+          proof.key,
+          proof.receiptProofValues,
+          proof.txProofValues,
+          proof.blockHash
+        );
+        this.logger.info("Reverse Zero: sync index " + i + " success");
       }
     }
+
     const msg = `Completed the reverse xdc-zero sync up till ${lastIndexFromSubnet} from parentnet, wait for the next cycle`;
     this.logger.info(msg);
     return msg;

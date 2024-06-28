@@ -36,11 +36,11 @@ export class Zero extends BaseProcessor {
     });
     return this;
   }
-  
+
   async reset(): Promise<void> {
     await this.queue.add({}, REPEAT_JOB_OPT);
   }
-  
+
   async processEvent() {
     const payloads = await this.zeroService.getPayloads();
     if (payloads.length == 0) {
@@ -51,8 +51,7 @@ export class Zero extends BaseProcessor {
     const lastPayload = payloads[payloads.length - 1];
     const lastIndexFromSubnet = lastPayload[0];
 
-    const lastIndexfromParentnet =
-      await this.zeroService.getIndexFromParentnet();
+    console.log(lastIndexFromSubnet);
 
     const lastBlockNumber = lastPayload[7];
     const cscBlockNumber = await this.zeroService.getLatestBlockNumberFromCsc();
@@ -62,20 +61,27 @@ export class Zero extends BaseProcessor {
       return msg;
     }
 
-    if (lastIndexFromSubnet > lastIndexfromParentnet) {
-      for (let i = lastIndexfromParentnet; i < lastIndexFromSubnet; i++) {
-        if (payloads?.[i]?.[6]) {
-          const proof = await this.zeroService.getProof(payloads[i][6]);
-          await this.zeroService.validateTransactionProof(
-            proof.key,
-            proof.receiptProofValues,
-            proof.txProofValues,
-            proof.blockHash
-          );
-          this.logger.info("Zero: sync index " + i + " success");
-        }
+    const subnetChainId = await this.zeroService.getSubnetChainId();
+
+    for (let i = 1; i <= lastIndexFromSubnet; i++) {
+      const used = await this.zeroService.checkIndexUsed(subnetChainId, i);
+      console.log("index", i, " used ", used);
+
+      const payload = payloads?.[i - 1];
+      const transactionHash = payload?.[6];
+
+      if (!used && transactionHash) {
+        const proof = await this.zeroService.getProof(transactionHash);
+        await this.zeroService.validateTransactionProof(
+          proof.key,
+          proof.receiptProofValues,
+          proof.txProofValues,
+          proof.blockHash
+        );
+        this.logger.info("Zero: sync index " + i + " success");
       }
     }
+
     const msg = `Completed the xdc-zero sync up till ${lastIndexFromSubnet} from subnet, wait for the next cycle`;
     this.logger.info(msg);
     return msg;
