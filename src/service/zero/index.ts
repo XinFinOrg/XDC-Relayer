@@ -161,18 +161,20 @@ export class ZeroService {
     return payloads;
   }
 
-  async checkIndexUsed(chainId: number, index: number) {
+  async getLastIndexFromParentnet() {
+    const subnetChainId = await this.getSubnetChainId();
     const parentnetEndpointContract = {
       // address: config.xdcZero.parentChainZeroContractAddress,
       address: this.parentnetZeroAddress,
       abi: endpointABI,
     };
-    const used = (await this.parentnetViemClient.readContract({
+    // getSendChainLastIndex
+    const lastIndex = (await this.parentnetViemClient.readContract({
       ...(parentnetEndpointContract as any),
-      functionName: "getUsedSendChainIndex",
-      args: [chainId, index],
-    })) as boolean;
-    return used;
+      functionName: "getSendChainLastIndex",
+      args: [subnetChainId],
+    })) as number;
+    return lastIndex;
   }
 
   async getSubnetChainId() {

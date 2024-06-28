@@ -51,8 +51,6 @@ export class Zero extends BaseProcessor {
     const lastPayload = payloads[payloads.length - 1];
     const lastIndexFromSubnet = lastPayload[0];
 
-    console.log(lastIndexFromSubnet);
-
     const lastBlockNumber = lastPayload[7];
     const cscBlockNumber = await this.zeroService.getLatestBlockNumberFromCsc();
     if (cscBlockNumber < lastBlockNumber) {
@@ -61,16 +59,14 @@ export class Zero extends BaseProcessor {
       return msg;
     }
 
-    const subnetChainId = await this.zeroService.getSubnetChainId();
+    const lastIndexFromParentnet =
+      await this.zeroService.getLastIndexFromParentnet();
 
-    for (let i = 1; i <= lastIndexFromSubnet; i++) {
-      const used = await this.zeroService.checkIndexUsed(subnetChainId, i);
-      console.log("index", i, " used ", used);
-
-      const payload = payloads?.[i - 1];
+    for (let i = lastIndexFromParentnet; i < lastIndexFromSubnet; i++) {
+      const payload = payloads?.[i];
       const transactionHash = payload?.[6];
 
-      if (!used && transactionHash) {
+      if (transactionHash) {
         const proof = await this.zeroService.getProof(transactionHash);
         await this.zeroService.validateTransactionProof(
           proof.key,

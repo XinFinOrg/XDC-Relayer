@@ -59,15 +59,13 @@ export class ReverseZero extends BaseProcessor {
       this.logger.info(msg);
       return msg;
     }
-    const subnetChainId = await this.zeroService.getSubnetChainId();
+    const lastIndexFromParentnet =
+      await this.zeroService.getLastIndexFromParentnet();
 
-    for (let i = 1; i <= lastIndexFromSubnet; i++) {
-      const used = await this.zeroService.checkIndexUsed(subnetChainId, i);
-      console.log("index", i, " used ", used);
-
-      const payload = payloads?.[i - 1];
+    for (let i = lastIndexFromParentnet; i < lastIndexFromSubnet; i++) {
+      const payload = payloads?.[i];
       const transactionHash = payload?.[6];
-      if (!used && transactionHash) {
+      if (transactionHash) {
         const proof = await this.zeroService.getProof(transactionHash);
         await this.zeroService.validateTransactionProof(
           proof.key,
