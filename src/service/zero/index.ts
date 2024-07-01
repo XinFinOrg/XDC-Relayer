@@ -36,29 +36,34 @@ export class ZeroService {
   private parentnetZeroAddress: string;
   private parentnetCSCAddress: string;
 
-  constructor(logger: bunyan, mode: "reverse" | string ) {
+  constructor(logger: bunyan, mode: "reverse" | string) {
     this.logger = logger;
-    if (mode == "reverse"){
+    if (mode == "reverse") {
       this.childnetService = new SubnetService(config.mainnet, logger);
       this.parentnetService = new MainnetService(config.subnet, logger);
       this.childnetUrl = config.mainnet.url;
       this.parentnetUrl = config.subnet.url;
-      if (config.xdcZero.isReverseEnabled){
+      if (config.xdcZero.isReverseEnabled) {
         this.parentnetCSCAddress = config.subnet.smartContractAddress;
         this.subnetZeroAddress = config.xdcZero.parentChainZeroContractAddress;
         this.parentnetZeroAddress = config.xdcZero.subnetZeroContractAddress;
-        this.parentnetWalletAccount = privateKeyToAccount(config.xdcZero.subnetWalletPk as Hex);
+        this.parentnetWalletAccount = privateKeyToAccount(
+          config.xdcZero.subnetWalletPk as Hex
+        );
       }
     } else {
       this.childnetService = new SubnetService(config.subnet, logger);
       this.parentnetService = new MainnetService(config.mainnet, logger);
       this.childnetUrl = config.subnet.url;
       this.parentnetUrl = config.mainnet.url;
-      if (config.xdcZero.isEnabled){
+      if (config.xdcZero.isEnabled) {
         this.parentnetCSCAddress = config.mainnet.smartContractAddress;
         this.subnetZeroAddress = config.xdcZero.subnetZeroContractAddress;
-        this.parentnetZeroAddress = config.xdcZero.parentChainZeroContractAddress;
-        this.parentnetWalletAccount = privateKeyToAccount(config.xdcZero.parentnetWalletPk as Hex);
+        this.parentnetZeroAddress =
+          config.xdcZero.parentChainZeroContractAddress;
+        this.parentnetWalletAccount = privateKeyToAccount(
+          config.xdcZero.parentnetWalletPk as Hex
+        );
       }
     }
   }
@@ -77,7 +82,7 @@ export class ZeroService {
         symbol: subnetNetworkInformation.Denom,
       },
       rpcUrls: {
-        public: { http: [this.childnetUrl]},
+        public: { http: [this.childnetUrl] },
         default: { http: [this.childnetUrl] },
       },
     };
@@ -156,20 +161,28 @@ export class ZeroService {
     return payloads;
   }
 
-  async getIndexFromParentnet() {
-    const subnetChainId = await this.childnetViemClient.getChainId();
+  async getLastIndexFromParentnet() {
+    const subnetChainId = await this.getSubnetChainId();
     const parentnetEndpointContract = {
       // address: config.xdcZero.parentChainZeroContractAddress,
       address: this.parentnetZeroAddress,
       abi: endpointABI,
     };
-    const chain = (await this.parentnetViemClient.readContract({
+    // getSendChainLastIndex
+    const lastIndex = (await this.parentnetViemClient.readContract({
       ...(parentnetEndpointContract as any),
-      functionName: "getChain",
+      functionName: "getSendChainLastIndex",
       args: [subnetChainId],
-    })) as { lastIndex: number };
+    })) as number;
+    return lastIndex;
+  }
 
-    return chain?.lastIndex;
+  async getSubnetChainId() {
+    return this.childnetViemClient.getChainId();
+  }
+
+  async getParentChainId() {
+    return this.parentnetViemClient.getChainId();
   }
 
   async getLatestBlockNumberFromCsc() {
