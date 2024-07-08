@@ -66,7 +66,8 @@ export class SubnetService {
     }
     await axios.post(this.subnetConfig.url, data, {timeout: 10000}).then((response) => {
       for (let i=0; i<response.data.length; i++){
-        const { Hash, Number, Round, EncodedRLP, ParentHash } = response.data[i].result;
+        const { Hash, Number, Round, HexRLP, ParentHash } = response.data[i].result;
+        const EncodedRLP = HexRLP;
         if (!Hash || !Number || !EncodedRLP || !ParentHash) {
           this.logger.error(
             "Invalid block hash or height or encodedRlp or ParentHash received",
@@ -75,7 +76,7 @@ export class SubnetService {
             EncodedRLP,
             ParentHash
           );
-          throw new Error("Unable to get committed block information by height from PARENTNET");
+          throw new Error("Unable to get committed block information by height from SUBNET");
         }
         blockInfoList.push({
           subnetBlockHash: Hash,
@@ -94,9 +95,10 @@ export class SubnetService {
  
   async getLastCommittedBlockInfo(): Promise<SubnetBlockInfo> {
     try {
-      const { Hash, Number, Round, EncodedRLP, ParentHash } =
+      const { Hash, Number, Round, HexRLP, ParentHash } =
         // await this.web3.xdcSubnet.getV2Block("committed");
         await this.web3.xdcSubnet.getV2Block("latest");
+        const EncodedRLP = HexRLP;
       if (!Hash || !Number || !EncodedRLP || !ParentHash) {
         this.logger.error(
           "Invalid block hash or height or encodedRlp or ParentHash received",
@@ -125,8 +127,9 @@ export class SubnetService {
 
   async getCommittedBlockInfoByNum(blockNum: number): Promise<SubnetBlockInfo> {
     try {
-      const { Hash, Number, Round, EncodedRLP, ParentHash } =
+      const { Hash, Number, Round, HexRLP, ParentHash } =
         await this.web3.xdcSubnet.getV2Block(`0x${blockNum.toString(16)}`);
+      const EncodedRLP = HexRLP;
       if (!Hash || !Number || !EncodedRLP || !ParentHash) {
         this.logger.error(
           "Invalid block hash or height or encodedRlp or ParentHash received",
@@ -158,8 +161,9 @@ export class SubnetService {
     blockHash: string
   ): Promise<SubnetBlockInfo> {
     try {
-      const { Hash, Number, Round, EncodedRLP, ParentHash } =
+      const { Hash, Number, Round, HexRLP, ParentHash } =
         await this.web3.xdcSubnet.getV2BlockByHash(blockHash);
+        const EncodedRLP = HexRLP;
       if (!Hash || !Number || !EncodedRLP || !ParentHash) {
         this.logger.error(
           "Invalid block hash or height or encodedRlp or ParentHash received",
