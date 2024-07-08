@@ -75,7 +75,7 @@ export class SubnetService {
             EncodedRLP,
             ParentHash
           );
-          throw new Error("Unable to get committed block information by height from PARENTNET");
+          throw new Error("Unable to get committed block information by height from SUBNET");
         }
         blockInfoList.push({
           subnetBlockHash: Hash,
@@ -95,8 +95,7 @@ export class SubnetService {
   async getLastCommittedBlockInfo(): Promise<SubnetBlockInfo> {
     try {
       const { Hash, Number, Round, EncodedRLP, ParentHash } =
-        // await this.web3.xdcSubnet.getV2Block("committed");
-        await this.web3.xdcSubnet.getV2Block("latest");
+        await this.web3.xdcSubnet.getV2Block("committed");
       if (!Hash || !Number || !EncodedRLP || !ParentHash) {
         this.logger.error(
           "Invalid block hash or height or encodedRlp or ParentHash received",
