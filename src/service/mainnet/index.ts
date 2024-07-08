@@ -102,7 +102,8 @@ export class MainnetService {
   ): Promise<void> {
     try {
       if (!results.length) return;
-      const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); 
+      // const encodedHexArray = results.map(r => "0x" + Buffer.from(r.encodedRLP, "base64").toString("hex")); 
+      const encodedHexArray = results.map((r) => "0x" + r.encodedRLP); // make compatible with old subnet v0.2.2
       const transactionToBeSent =
         await this.smartContractInstance.methods.receiveHeader(encodedHexArray);
       const gas = await transactionToBeSent.estimateGas({
