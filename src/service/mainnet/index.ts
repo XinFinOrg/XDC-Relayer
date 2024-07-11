@@ -131,7 +131,7 @@ export class MainnetService {
   }
 
   async submitTxsDynamic(results: Array<{ encodedRLP: string; blockNum: number }>): Promise<void> {
-    const blocksPerTx = [20, 10, 5, 1];
+    const blocksPerTx = [30, 15, 5, 1];
     //make 1 initial try, this is for when blocks are caught up
     if (results.length < blocksPerTx[0]){
       try{
