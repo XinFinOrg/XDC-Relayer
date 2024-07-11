@@ -45,7 +45,7 @@ export class ReverseZero extends BaseProcessor {
     const payloads = await this.zeroService.getPayloads();
     if (payloads.length == 0) {
       const msg =
-        "Nothing to process in reverse xdc-zero, wait for the next event log";
+        "Nothing to process in reverse-xdc-zero, wait for the next event log";
       this.logger.info(msg);
       return msg;
     }
