@@ -19,14 +19,14 @@ export class ReverseZero extends BaseProcessor {
     this.zeroService = new ZeroService(logger, "reverse");
   }
   init() {
-    this.logger.info("Initialising Reverse XDC-Zero");
+    this.logger.info("Initialising Reverse-XDC-Zero");
     this.zeroService.init();
     this.queue.process(async (_, done) => {
-      this.logger.info("⏰ Executing reverse xdc-zero periodically");
+      this.logger.info("⏰ Executing reverse-xdc-zero periodically");
       try {
         done(null, await this.processEvent());
       } catch (error) {
-        this.logger.error("Fail to process reverse xdc-zero job", {
+        this.logger.error("Fail to process reverse-xdc-zero job", {
           message: error.message,
         });
         // Report the error
@@ -45,7 +45,7 @@ export class ReverseZero extends BaseProcessor {
     const payloads = await this.zeroService.getPayloads();
     if (payloads.length == 0) {
       const msg =
-        "Nothing to process in reverse xdc-zero, wait for the next event log";
+        "Nothing to process in reverse-xdc-zero, wait for the next event log";
       this.logger.info(msg);
       return msg;
     }
@@ -77,7 +77,7 @@ export class ReverseZero extends BaseProcessor {
       }
     }
 
-    const msg = `Completed the reverse xdc-zero sync up till ${lastIndexFromSubnet} from parentnet, wait for the next cycle`;
+    const msg = `Completed the reverse-xdc-zero sync up till ${lastIndexFromSubnet} from parentnet, wait for the next cycle`;
     this.logger.info(msg);
     return msg;
   }
