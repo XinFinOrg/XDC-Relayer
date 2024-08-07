@@ -1,5 +1,6 @@
 import Bull from "bull";
 
+
 export abstract class BaseProcessor {
   queue: Bull.Queue;
   constructor(name: string) {
