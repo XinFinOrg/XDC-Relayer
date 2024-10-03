@@ -17,7 +17,7 @@ export class Lite extends BaseProcessor {
     super(NAME);
     this.logger = logger;
     this.liteMainnetService = new LiteMainnetService(config.mainnet, logger);
-    // this.subnetService = new SubnetService(config.subnet, logger);
+    this.subnetService = new SubnetService(config.subnet, logger);
   }
   
   init() {
