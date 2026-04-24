@@ -45,7 +45,15 @@ const bootstrap = async (): Promise<void> => {
 app.listen(config.port, async () => {
   logger.info(`Relayer running on port ${config.port}`);
   await checkConnection();
-  processors.init(serverAdapter);
+  try {
+    processors.init(serverAdapter);
+  } catch (error) {
+    logger.error("Startup failed: processors.init threw", {
+      message: error.message,
+      stack: error.stack,
+    });
+    process.exit(1);
+  }
   await bootstrap();
 });
 
@@ -54,6 +62,8 @@ app.listen(config.port, async () => {
 const checkConnection = async () => {
   logger.info("Checking redis connection");
   const redisClient = new Redis({
+    host: process.env.REDIS_HOST || "127.0.0.1",
+    port: +(process.env.REDIS_PORT || 6379),
     maxRetriesPerRequest: 2
   });
   try {
