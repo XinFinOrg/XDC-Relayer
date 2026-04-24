@@ -4,7 +4,12 @@ import Bull from "bull";
 export abstract class BaseProcessor {
   queue: Bull.Queue;
   constructor(name: string) {
-    this.queue = new Bull(name);
+    this.queue = new Bull(name, {
+      redis: {
+        host: process.env.REDIS_HOST || "127.0.0.1",
+        port: +(process.env.REDIS_PORT || 6379),
+      },
+    });
   }
 
   /**

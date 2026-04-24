@@ -73,7 +73,7 @@ export class Processors {
   
     const modes: Mode[] = await this.getRunningModes();
     // Depending on the mode, we choose different processor to work on
-    modes.map(async (m) => {
+    await Promise.all(modes.map(async (m) => {
       switch (m) {
         case Mode.LITE:
           await this.processors.lite.reset();
@@ -94,7 +94,7 @@ export class Processors {
         default:
           throw new Error("No avaiable modes to choose from");
       }
-    });
+    }));
   }
   
   private async getRunningModes(): Promise<Mode[]> {
