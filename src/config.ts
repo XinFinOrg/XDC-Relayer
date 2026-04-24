@@ -79,7 +79,7 @@ const getZeroConfig = (): XdcZeroConfig => {
   }
   let subnetWalletPk = "";
   if (isReverseEnabled){
-    subnetWalletPk = process.env.SUBNET_ZERO_WALLET_PK.startsWith("0x") ? process.env.SUBNET_ZERO_WALLET_PK : `0x${process.env.SUBNET_WALLET_PK}`;
+    subnetWalletPk = process.env.SUBNET_ZERO_WALLET_PK.startsWith("0x") ? process.env.SUBNET_ZERO_WALLET_PK : `0x${process.env.SUBNET_ZERO_WALLET_PK}`;
   }
   return {
     isEnabled,

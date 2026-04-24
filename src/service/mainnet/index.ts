@@ -41,6 +41,7 @@ export class MainnetService {
     const provider = new Web3.providers.HttpProvider(config.url, {
       keepAlive: true,
       agent: { https: keepaliveAgent },
+      headers: [{ name: "User-Agent", value: "xdc-relayer" }],
     });
     this.web3 = new Web3(provider).extend(mainnetExtensions);
     this.smartContractInstance = new this.web3.eth.Contract(
@@ -303,7 +304,7 @@ export class MainnetService {
 
   async Mode(): Promise<"lite"| "full"| "reverse_full"> {
     try {
-      return this.smartContractInstance.methods.MODE().call();
+      return await this.smartContractInstance.methods.MODE().call();
     } catch (error) {
       this.logger.error("Fail to get mode from PARENTNET smart contract");
       throw error;
@@ -324,6 +325,7 @@ export class LiteMainnetService {
     const provider = new Web3.providers.HttpProvider(config.url, {
       keepAlive: true,
       agent: { https: keepaliveAgent },
+      headers: [{ name: "User-Agent", value: "xdc-relayer" }],
     });
     this.web3 = new Web3(provider);
     this.liteSmartContractInstance = new this.web3.eth.Contract(
@@ -505,7 +507,7 @@ export class LiteMainnetService {
   }
   async Mode(): Promise<"lite"| "full"| "reverse_full"> {
     try {
-      return this.liteSmartContractInstance.methods.MODE().call();
+      return await this.liteSmartContractInstance.methods.MODE().call();
     } catch (error) {
       this.logger.error("Fail to get mode from mainnet smart contract");
       throw error;

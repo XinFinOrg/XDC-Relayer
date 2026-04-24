@@ -20,7 +20,11 @@ export class Zero extends BaseProcessor {
   }
   init() {
     this.logger.info("Initialising XDC-Zero");
-    this.zeroService.init();
+    if (config.xdcZero.isEnabled) {
+      this.zeroService.init().catch((error) => {
+        this.logger.error("Fail to init XDC-Zero service", { message: error.message });
+      });
+    }
     this.queue.process(async (_, done) => {
       this.logger.info("⏰ Executing xdc-zero periodically");
       try {

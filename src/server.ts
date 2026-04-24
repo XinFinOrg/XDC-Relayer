@@ -28,10 +28,25 @@ serverAdapter.setBasePath('/');
 // "/" route show the relayer job status
 app.use('/', serverAdapter.getRouter());
 
+const bootstrap = async (): Promise<void> => {
+  try {
+    await processors.reset();
+    logger.info("Bootstrap complete");
+  } catch (error) {
+    logger.error(
+      `Bootstrap failed, retrying in ${config.reBootstrapWaitingTime}ms`,
+      { message: error.message }
+    );
+    await new Promise((r) => setTimeout(r, config.reBootstrapWaitingTime));
+    return bootstrap();
+  }
+};
+
 app.listen(config.port, async () => {
   logger.info(`Relayer running on port ${config.port}`);
   await checkConnection();
-  await processors.init(serverAdapter).reset();
+  processors.init(serverAdapter);
+  await bootstrap();
 });
 
   

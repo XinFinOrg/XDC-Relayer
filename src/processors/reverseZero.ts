@@ -20,7 +20,11 @@ export class ReverseZero extends BaseProcessor {
   }
   init() {
     this.logger.info("Initialising Reverse-XDC-Zero");
-    this.zeroService.init();
+    if (config.xdcZero.isReverseEnabled) {
+      this.zeroService.init().catch((error) => {
+        this.logger.error("Fail to init Reverse-XDC-Zero service", { message: error.message });
+      });
+    }
     this.queue.process(async (_, done) => {
       this.logger.info("⏰ Executing reverse-xdc-zero periodically");
       try {

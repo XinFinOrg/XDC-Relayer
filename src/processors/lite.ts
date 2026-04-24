@@ -102,7 +102,7 @@ export class Lite extends BaseProcessor {
         await this.liteMainnetService.commitHeader(
           scHash,
           results.map((item) => {
-            return "0x" + item.encodedRLP;
+            return "0x" + Buffer.from(item.encodedRLP, "base64").toString("hex");
           })
         );
       } else {
