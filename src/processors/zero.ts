@@ -12,6 +12,7 @@ const REPEAT_JOB_OPT = {
 export class Zero extends BaseProcessor {
   private logger: bunyan;
   private zeroService: ZeroService;
+  private ready = false;
 
   constructor(logger: bunyan) {
     super(NAME);
@@ -21,9 +22,15 @@ export class Zero extends BaseProcessor {
   init() {
     this.logger.info("Initialising XDC-Zero");
     if (config.xdcZero.isEnabled) {
-      this.zeroService.init().catch((error) => {
-        this.logger.error("Fail to init XDC-Zero service", { message: error.message });
-      });
+      this.zeroService
+        .init()
+        .then(() => {
+          this.ready = true;
+          this.logger.info("XDC-Zero service ready");
+        })
+        .catch((error) => {
+          this.logger.error("Failed to init XDC-Zero service", { message: error.message });
+        });
     }
     this.queue.process(async (_, done) => {
       this.logger.info("⏰ Executing xdc-zero periodically");
@@ -46,6 +53,11 @@ export class Zero extends BaseProcessor {
   }
 
   async processEvent() {
+    if (!this.ready) {
+      const msg = "XDC-Zero service not ready, skipping cycle";
+      this.logger.info(msg);
+      return msg;
+    }
     const payloads = await this.zeroService.getPayloads();
     if (payloads.length == 0) {
       const msg = "Nothing to process in xdc-zero, wait for the next event log";
