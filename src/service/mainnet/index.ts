@@ -5,7 +5,7 @@ import { Account } from "web3-core";
 import { HttpsAgent } from "agentkeepalive";
 import bunyan from "bunyan";
 import { MainnetConfig } from "../../config";
-import { sleep } from "../../utils/index";
+import { getGasPrice, sleep } from "../../utils/index";
 import FullABI from "./ABI/FullABI.json";
 import LiteABI from "./ABI/LiteABI.json";
 import { Web3WithExtension, mainnetExtensions } from "./extensions";
@@ -13,7 +13,6 @@ import { NetworkInformation } from "../types";
 import { formatV2BlockInfo } from "../xdpos";
 import axios, { AxiosInstance } from "axios";
 
-const TRANSACTION_GAS_NUMBER = 12500000000;   //TODO: check this is different now?, is there better way to handle?
 
 export interface MainnetBlockInfo {
   mainnetBlockHash: string;
@@ -114,7 +113,7 @@ export class MainnetService {
         to: transactionToBeSent._parent._address,
         data: transactionToBeSent.encodeABI(),
         gas,
-        gasPrice: TRANSACTION_GAS_NUMBER,
+        gasPrice: await getGasPrice(this.web3),
       };
       const signed = await this.web3.eth.accounts.signTransaction(
         options,
@@ -403,7 +402,7 @@ export class LiteMainnetService {
         to: transactionToBeSent._parent._address,
         data: transactionToBeSent.encodeABI(),
         gas,
-        gasPrice: TRANSACTION_GAS_NUMBER,
+        gasPrice: await getGasPrice(this.web3),
       };
       const signed = await this.web3.eth.accounts.signTransaction(
         options,
@@ -469,7 +468,7 @@ export class LiteMainnetService {
         to: transactionToBeSent._parent._address,
         data: transactionToBeSent.encodeABI(),
         gas,
-        gasPrice: TRANSACTION_GAS_NUMBER,
+        gasPrice: await getGasPrice(this.web3),
       };
       const signed = await this.web3.eth.accounts.signTransaction(
         options,

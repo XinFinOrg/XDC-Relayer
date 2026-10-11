@@ -5,14 +5,13 @@ import { Account } from "web3-core";
 import { HttpsAgent } from "agentkeepalive";
 import bunyan from "bunyan";
 import { SubnetConfig } from "../../config";
-import { sleep } from "../../utils/index";
+import { getGasPrice, sleep } from "../../utils/index";
 import { subnetExtensions, Web3WithExtension } from "./extensions";
 import { NetworkInformation } from "../types";
 import { formatV2BlockInfo } from "../xdpos";
 import FullABI from "./ABI/FullABI.json";
 import axios from "axios";
 
-const TRANSACTION_GAS_NUMBER = 12500000000;   //TODO: check this is different now?, is there better way to handle?
 
 export interface SubnetBlockInfo {
   subnetBlockHash: string;
@@ -285,7 +284,7 @@ export class SubnetService {
         to: transactionToBeSent._parent._address,
         data: transactionToBeSent.encodeABI(),
         gas,
-        gasPrice: TRANSACTION_GAS_NUMBER,
+        gasPrice: await getGasPrice(this.web3),
       };
       const signed = await this.web3.eth.accounts.signTransaction(
         options,
