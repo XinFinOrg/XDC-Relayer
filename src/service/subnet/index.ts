@@ -8,6 +8,7 @@ import { SubnetConfig } from "../../config";
 import { sleep } from "../../utils/index";
 import { subnetExtensions, Web3WithExtension } from "./extensions";
 import { NetworkInformation } from "../types";
+import { formatV2BlockInfo } from "../xdpos";
 import FullABI from "./ABI/FullABI.json";
 import axios from "axios";
 
@@ -67,7 +68,7 @@ export class SubnetService {
     }
     await axios.post(this.subnetConfig.url, data, {timeout: 10000}).then((response) => {
       for (let i=0; i<response.data.length; i++){
-        const { Hash, Number, Round, EncodedRLP, ParentHash } = response.data[i].result;
+        const { Hash, Number, Round, EncodedRLP, ParentHash } = formatV2BlockInfo(response.data[i].result);
         if (!Hash || !Number || !EncodedRLP || !ParentHash) {
           this.logger.error(
             "Invalid block hash or height or encodedRlp or ParentHash received",
