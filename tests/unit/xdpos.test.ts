@@ -1,4 +1,5 @@
-import { formatCommittedBlockInfo, formatNetworkInformation, formatV2BlockInfo } from "../src/service/xdpos";
+import { formatCommittedBlockInfo, formatNetworkInformation, formatV2BlockInfo } from "../../src/service/xdpos";
+import { gethV2Block, nethermindV2Block } from "../helpers/fixtures";
 
 describe("formatV2BlockInfo", () => {
   const expected = {
@@ -52,5 +53,24 @@ describe("formatNetworkInformation", () => {
     const expected = { Denom: "XDC", NetworkId: 51, NetworkName: "devnet" };
     expect(formatNetworkInformation({ Denom: "XDC", NetworkId: 51, NetworkName: "devnet" })).toEqual(expected);
     expect(formatNetworkInformation({ denom: "XDC", networkId: "0x33", networkName: "devnet" })).toEqual(expected);
+  });
+});
+
+describe("formatV2BlockInfo with real client responses", () => {
+  it("produces identical output for the XDPoSChain and Nethermind shapes of the same block", () => {
+    const fromGeth = formatV2BlockInfo(gethV2Block);
+    const fromNethermind = formatV2BlockInfo(nethermindV2Block);
+    expect(fromNethermind).toEqual({ ...fromGeth, Error: undefined });
+    expect(fromGeth).toMatchObject({
+      Hash: gethV2Block.Hash,
+      Number: 1957888,
+      Round: 1961081,
+      Committed: true,
+      EncodedRLP: gethV2Block.EncodedRLP,
+    });
+  });
+
+  it("passes undefined results through (a batch entry that errored)", () => {
+    expect(formatV2BlockInfo(undefined)).toBeUndefined();
   });
 });
