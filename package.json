@@ -12,6 +12,7 @@
     "test": "jest",
     "test:coverage": "jest --collect-coverage",
     "test:watch": "jest --watch",
+    "test:integration": "jest tests/integration",
     "postinstall": "patch-package"
   },
   "engines": {
@@ -70,7 +71,10 @@
       "<rootDir>"
     ],
     "testMatch": [
-      "**/tests/**/*.+(ts|tsx|js)"
+      "**/tests/**/*.test.ts"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.ts"
     ],
     "transform": {
       "^.+\\.(ts|tsx)$": "ts-jest"

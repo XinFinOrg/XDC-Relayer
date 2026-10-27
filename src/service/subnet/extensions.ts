@@ -1,5 +1,6 @@
 import Web3 from "web3";
 import { NetworkInformation } from "../types";
+import { formatCommittedBlockInfo, formatNetworkInformation, formatV2BlockInfo, web3Formatter } from "../xdpos";
 
 const SUBNET_EXTENSION_NAME = "xdcSubnet";
 
@@ -48,26 +49,31 @@ export const subnetExtensions = {
   methods: [
     {
       name: "getLatestCommittedBlockInfo",
-      call: "XDPoS_getLatestCommittedBlockHeader"
+      call: "XDPoS_getLatestCommittedBlockHeader",
+      outputFormatter: web3Formatter(formatCommittedBlockInfo)
     },
     {
       name: "getV2Block",
       params: 1,
-      call: "XDPoS_getV2BlockByNumber"
+      call: "XDPoS_getV2BlockByNumber",
+      outputFormatter: web3Formatter(formatV2BlockInfo)
     },
     {
       name: "getV2BlockByNumber",
       params: 1,
-      call: "XDPoS_getV2BlockByNumber"
+      call: "XDPoS_getV2BlockByNumber",
+      outputFormatter: web3Formatter(formatV2BlockInfo)
     },
     {
       name: "getV2BlockByHash",
       params: 1,
-      call: "XDPoS_getV2BlockByHash"
+      call: "XDPoS_getV2BlockByHash",
+      outputFormatter: web3Formatter(formatV2BlockInfo)
     }, {
       name: "getNetworkInformation",
       params: 0,
-      call: "XDPoS_networkInformation"
+      call: "XDPoS_networkInformation",
+      outputFormatter: web3Formatter(formatNetworkInformation)
     },
     {
       name: "getTransactionAndReceiptProof",
