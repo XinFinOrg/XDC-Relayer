@@ -59,6 +59,26 @@ const withClients = (service: ZeroService, logs: unknown[] = []) => {
 
 describe("ZeroService", () => {
   describe("getPayloads", () => {
+    // Answers the contract reads getPayloads makes: the CSC's committed childnet block, and the reverse CSC's
+    // init status and init block.
+    const mockReads = (clients: Clients, reads: { cscCommitted: number; initStatus?: number; initBlock?: number | Error }) => {
+      clients.parentnetViemClient.readContract.mockImplementation(async ({ functionName }: { functionName: string }) => {
+        if (functionName == "getLatestBlocks") {
+          return [{ hash: "0x01", number: BigInt(reads.cscCommitted + 3) }, { hash: "0x02", number: BigInt(reads.cscCommitted) }];
+        }
+        if (functionName == "INIT_STATUS") {
+          return BigInt(reads.initStatus ?? 1);
+        }
+        if (functionName == "INIT_V2ESBN") {
+          if (reads.initBlock instanceof Error) throw reads.initBlock;
+          return BigInt(reads.initBlock);
+        }
+        throw new Error(`unexpected read ${functionName}`);
+      });
+    };
+    const scannedRanges = (clients: Clients) =>
+      clients.childnetViemClient.getContractEvents.mock.calls.map(([args]) => [Number(args.fromBlock), Number(args.toBlock)]);
+
     it("decodes Packet events addressed to the parent chain and appends tx hash and block number", async () => {
       const service = new ZeroService(createLogger(), "normal");
       const clients = withClients(service, [
@@ -66,20 +86,134 @@ describe("ZeroService", () => {
         packetLog(1, 999, "0xbb", BigInt(101)), // another destination chain
         packetLog(2, PARENT_CHAIN, "0xcc", BigInt(102)),
       ]);
+      mockReads(clients, { cscCommitted: 200 });
       const payloads = await service.getPayloads();
       expect(payloads).toEqual([
         [BigInt(1), BigInt(SUBNET_CHAIN), SUA, BigInt(PARENT_CHAIN), RUA, "0xdeadbeef", "0xaa", BigInt(100)],
         [BigInt(2), BigInt(SUBNET_CHAIN), SUA, BigInt(PARENT_CHAIN), RUA, "0xdeadbeef", "0xcc", BigInt(102)],
       ]);
       expect(clients.childnetViemClient.getContractEvents).toHaveBeenCalledWith(
-        expect.objectContaining({ address: mockConfig.xdcZero.subnetZeroContractAddress, eventName: "Packet", fromBlock: BigInt(0) })
+        expect.objectContaining({
+          address: mockConfig.xdcZero.subnetZeroContractAddress,
+          eventName: "Packet",
+          fromBlock: BigInt(0),
+          toBlock: BigInt(200),
+        })
       );
     });
 
     it("returns nothing when there are no logs", async () => {
       const service = new ZeroService(createLogger(), "normal");
-      withClients(service, []);
+      const clients = withClients(service, []);
+      mockReads(clients, { cscCommitted: 200 });
       await expect(service.getPayloads()).resolves.toEqual([]);
+    });
+
+    it.each([
+      { cscCommitted: 0, ranges: [[0, 0]] },
+      { cscCommitted: 4998, ranges: [[0, 4998]] },
+      { cscCommitted: 4999, ranges: [[0, 4999]] },
+      { cscCommitted: 5000, ranges: [[0, 4999], [5000, 5000]] },
+      { cscCommitted: 12000, ranges: [[0, 4999], [5000, 9999], [10000, 12000]] },
+    ])("splits blocks 0..$cscCommitted into requests of at most 5000 blocks", async ({ cscCommitted, ranges }) => {
+      const service = new ZeroService(createLogger(), "normal");
+      const clients = withClients(service, []);
+      mockReads(clients, { cscCommitted });
+      await service.getPayloads();
+      expect(scannedRanges(clients)).toEqual(ranges);
+    });
+
+    it("keeps its cache intact when a caller changes the returned list", async () => {
+      const service = new ZeroService(createLogger(), "normal");
+      const clients = withClients(service, [packetLog(1, PARENT_CHAIN, "0xaa", BigInt(100))]);
+      mockReads(clients, { cscCommitted: 200 });
+      (await service.getPayloads()).pop();
+      await expect(service.getPayloads()).resolves.toHaveLength(1);
+    });
+
+    it("only scans new blocks on later calls and keeps the payloads already found", async () => {
+      const service = new ZeroService(createLogger(), "normal");
+      const clients = withClients(service);
+      clients.childnetViemClient.getContractEvents
+        .mockResolvedValueOnce([packetLog(1, PARENT_CHAIN, "0xaa", BigInt(100))])
+        .mockResolvedValueOnce([packetLog(2, PARENT_CHAIN, "0xcc", BigInt(205))]);
+      mockReads(clients, { cscCommitted: 200 });
+      await service.getPayloads();
+      mockReads(clients, { cscCommitted: 210 });
+      const payloads = await service.getPayloads();
+      expect(scannedRanges(clients)).toEqual([[0, 200], [201, 210]]);
+      expect(payloads.map((p: unknown[]) => p[6])).toEqual(["0xaa", "0xcc"]);
+    });
+
+    it("does not query logs until the CSC commits a new block", async () => {
+      const service = new ZeroService(createLogger(), "normal");
+      const clients = withClients(service, []);
+      mockReads(clients, { cscCommitted: 200 });
+      await service.getPayloads();
+      await service.getPayloads();
+      expect(scannedRanges(clients)).toEqual([[0, 200]]);
+    });
+
+    it("resumes from the failed chunk when a request fails, without losing or repeating payloads", async () => {
+      const service = new ZeroService(createLogger(), "normal");
+      const clients = withClients(service);
+      clients.childnetViemClient.getContractEvents
+        .mockResolvedValueOnce([packetLog(1, PARENT_CHAIN, "0xaa", BigInt(100))])
+        .mockRejectedValueOnce(new Error("timeout"))
+        .mockResolvedValueOnce([packetLog(2, PARENT_CHAIN, "0xcc", BigInt(6000))]);
+      mockReads(clients, { cscCommitted: 7000 });
+      await expect(service.getPayloads()).rejects.toThrow("timeout");
+      const payloads = await service.getPayloads();
+      expect(scannedRanges(clients)).toEqual([[0, 4999], [5000, 7000], [5000, 7000]]);
+      expect(payloads.map((p: unknown[]) => p[6])).toEqual(["0xaa", "0xcc"]);
+    });
+
+    it.each([
+      { initBlock: 84607100, cscCommitted: 84608147, ranges: [[84607100, 84608147]] },
+      { initBlock: 84607100, cscCommitted: 84607100, ranges: [[84607100, 84607100]] },
+      { initBlock: 84600000, cscCommitted: 84612000, ranges: [[84600000, 84604999], [84605000, 84609999], [84610000, 84612000]] },
+      { initBlock: 0, cscCommitted: 30, ranges: [[0, 30]] }, // a parentnet running XDPoS v2 from genesis
+    ])("reverse mode scans $initBlock..$cscCommitted, from the block the reverse CSC was initialised from", async ({ initBlock, cscCommitted, ranges }) => {
+      const service = new ZeroService(createLogger(), "reverse");
+      const clients = withClients(service, []);
+      mockReads(clients, { cscCommitted, initBlock });
+      await service.getPayloads();
+      expect(scannedRanges(clients)).toEqual(ranges);
+      expect(clients.parentnetViemClient.readContract).toHaveBeenCalledWith(
+        expect.objectContaining({ address: mockConfig.subnet.smartContractAddress, functionName: "INIT_V2ESBN" })
+      );
+    });
+
+    it("reverse mode reads the init block only once", async () => {
+      const service = new ZeroService(createLogger(), "reverse");
+      const clients = withClients(service, []);
+      mockReads(clients, { cscCommitted: 84608147, initBlock: 84607100 });
+      await service.getPayloads();
+      await service.getPayloads();
+      const initReads = clients.parentnetViemClient.readContract.mock.calls.filter(([args]) => args.functionName == "INIT_V2ESBN");
+      expect(initReads).toHaveLength(1);
+    });
+
+    it("reverse mode waits for the reverse CSC to be initialised instead of scanning from block 0", async () => {
+      const service = new ZeroService(createLogger(), "reverse");
+      const clients = withClients(service, []);
+      mockReads(clients, { cscCommitted: 0, initStatus: 0, initBlock: 0 });
+      await expect(service.getPayloads()).rejects.toThrow("Reverse CSC is not initialised yet");
+      expect(clients.childnetViemClient.getContractEvents).not.toHaveBeenCalled();
+      mockReads(clients, { cscCommitted: 84608147, initBlock: 84607100 });
+      await service.getPayloads();
+      expect(scannedRanges(clients)).toEqual([[84607100, 84608147]]);
+    });
+
+    it("reverse mode fails the cycle rather than scanning from block 0 when the init block cannot be read", async () => {
+      const service = new ZeroService(createLogger(), "reverse");
+      const clients = withClients(service, []);
+      mockReads(clients, { cscCommitted: 84608147, initBlock: new Error("execution reverted") });
+      await expect(service.getPayloads()).rejects.toThrow("execution reverted");
+      expect(clients.childnetViemClient.getContractEvents).not.toHaveBeenCalled();
+      mockReads(clients, { cscCommitted: 84608147, initBlock: 84607100 });
+      await service.getPayloads();
+      expect(scannedRanges(clients)).toEqual([[84607100, 84608147]]);
     });
   });
 

@@ -83,6 +83,12 @@ describe.each([
     ]);
   });
 
+  it("finds packets by their index when the scan did not start at the first packet", async () => {
+    const { processor, zero } = await setup({ payloads: [payload(5, 100), payload(6, 110), payload(7, 120)], cscBlock: 120, parentIndex: 5 });
+    await expect(processor.processEvent()).resolves.toMatch(/sync up till 7/);
+    expect(zero.getProof.mock.calls).toEqual([["0xtx6"], ["0xtx7"]]);
+  });
+
   it("does nothing when the destination already received every packet", async () => {
     const { processor, zero } = await setup({ payloads: [payload(1, 100), payload(2, 110)], parentIndex: 2 });
     await processor.processEvent();

@@ -7,6 +7,7 @@ import {
   createPublicClient,
   decodeAbiParameters,
   http,
+  parseAbi,
 } from "viem";
 import bunyan from "bunyan";
 import { config } from "../../config";
@@ -16,6 +17,17 @@ import cscABI from "../../abi/cscABI.json";
 import { MainnetService } from "../mainnet";
 import Logger from "bunyan";
 import { privateKeyToAccount } from "viem/accounts";
+
+// eth_getLogs cost grows with the block range, and public RPCs time out on wide ones (all of Apothem
+// from block 0), so Packet logs are fetched in windows of this many blocks.
+const LOG_FETCH_CHUNK_SIZE = BigInt(5000);
+
+// The reverse CSC records the parentnet block it was initialised from. Packets emitted before it can
+// never be proven against that CSC, so it is where the reverse log scan starts.
+const reverseCscInitAbi = parseAbi([
+  "function INIT_STATUS() view returns (uint64)",
+  "function INIT_V2ESBN() view returns (uint64)",
+]);
 
 // This class must be called with init() in order to use it
 
@@ -35,9 +47,14 @@ export class ZeroService {
   private subnetZeroAddress: string;
   private parentnetZeroAddress: string;
   private parentnetCSCAddress: string;
+  private mode: "reverse" | string;
+  // First childnet block not yet scanned for Packet logs, and the payloads found so far.
+  private nextLogBlock: bigint | undefined;
+  private payloads = [] as any[];
 
   constructor(logger: bunyan, mode: "reverse" | string) {
     this.logger = logger;
+    this.mode = mode;
     if (mode == "reverse") {
       this.childnetService = new SubnetService(config.mainnet, logger);
       this.parentnetService = new MainnetService(config.subnet, logger);
@@ -121,22 +138,54 @@ export class ZeroService {
     });
   }
 
+  // Returns every Packet addressed to the parentnet, from the scan start block up to the childnet block
+  // the CSC has committed. Only blocks not scanned in an earlier call are fetched. Stopping at the CSC's
+  // committed block keeps uncommitted (reorgable) logs out of the cache; later packets cannot be proven yet anyway.
   async getPayloads() {
-    const payloads = [] as any;
+    if (this.nextLogBlock === undefined) {
+      this.nextLogBlock = await this.getLogStartBlock();
+    }
     const subnetEndpointContract = {
       // address: config.xdcZero.subnetZeroContractAddress,
       address: this.subnetZeroAddress,
       abi: endpointABI,
     };
-
-    const logs = await this.childnetViemClient.getContractEvents({
-      ...(subnetEndpointContract as any),
-      fromBlock: BigInt(0),
-      eventName: "Packet",
-    });
-
     const parentChainId = await this.parentnetViemClient.getChainId();
+    const lastBlock = BigInt(await this.getLatestBlockNumberFromCsc());
 
+    while (this.nextLogBlock <= lastBlock) {
+      const chunkEnd = this.nextLogBlock + LOG_FETCH_CHUNK_SIZE - BigInt(1);
+      const toBlock = chunkEnd < lastBlock ? chunkEnd : lastBlock;
+      const logs = await this.childnetViemClient.getContractEvents({
+        ...(subnetEndpointContract as any),
+        fromBlock: this.nextLogBlock,
+        toBlock,
+        eventName: "Packet",
+      });
+      this.payloads.push(...this.decodePayloads(logs, parentChainId));
+      this.nextLogBlock = toBlock + BigInt(1);
+    }
+
+    return [...this.payloads];
+  }
+
+  private async getLogStartBlock(): Promise<bigint> {
+    if (this.mode != "reverse") {
+      return BigInt(0);
+    }
+    const reverseCsc = { address: this.parentnetCSCAddress as Hex, abi: reverseCscInitAbi };
+    // Before init, INIT_V2ESBN reads 0. Caching that would scan the whole parentnet once the CSC is initialised.
+    const initStatus = await this.parentnetViemClient.readContract({ ...reverseCsc, functionName: "INIT_STATUS" });
+    if (initStatus == BigInt(0)) {
+      throw new Error("Reverse CSC is not initialised yet, cannot pick the block to scan Packet logs from");
+    }
+    const initBlock = await this.parentnetViemClient.readContract({ ...reverseCsc, functionName: "INIT_V2ESBN" });
+    this.logger.info(`Reverse-XDC-Zero scans Packet logs from parentnet block ${initBlock}, where the reverse CSC starts`);
+    return initBlock;
+  }
+
+  private decodePayloads(logs: any[], parentChainId: number) {
+    const payloads = [] as any[];
     logs?.forEach((log) => {
       const values = decodeAbiParameters(
         [

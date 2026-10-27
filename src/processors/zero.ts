@@ -79,7 +79,9 @@ export class Zero extends BaseProcessor {
       await this.zeroService.getLastIndexFromParentnet();
 
     for (let i = lastIndexFromParentnet; i < lastIndexFromSubnet; i++) {
-      const payload = payloads?.[i];
+      // Packet indexes start at 1: the destination's next expected packet is index i + 1.
+      // Look it up by index, since the scan may not start at the first packet.
+      const payload = payloads.find((p: any[]) => BigInt(p[0]) == BigInt(i) + BigInt(1));
       const transactionHash = payload?.[6];
 
       if (transactionHash) {
